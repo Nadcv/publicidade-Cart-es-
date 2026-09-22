@@ -15,16 +15,21 @@ function getSupabaseAdmin() {
   return client;
 }
 
-// Faz upload de uma imagem (Buffer) para o bucket "print-files" e devolve a URL pública.
+// Nome do bucket de Storage onde ficam os PNGs de impressão. Configurável via
+// STORAGE_BUCKET_NAME para o caso de o bucket ter sido criado com outro nome
+// (ex: o Chrome traduziu "print-files" para "arquivos de impressão" ao criar o bucket).
+var BUCKET_NAME = process.env.STORAGE_BUCKET_NAME || "print-files";
+
+// Faz upload de uma imagem (Buffer) para o bucket de impressão e devolve a URL pública.
 async function uploadPrintFile(orderId, buffer, contentType) {
   var supabase = getSupabaseAdmin();
   var path = orderId + ".png";
-  var upload = await supabase.storage.from("print-files").upload(path, buffer, {
+  var upload = await supabase.storage.from(BUCKET_NAME).upload(path, buffer, {
     contentType: contentType || "image/png",
     upsert: true
   });
   if (upload.error) throw upload.error;
-  var pub = supabase.storage.from("print-files").getPublicUrl(path);
+  var pub = supabase.storage.from(BUCKET_NAME).getPublicUrl(path);
   return pub.data.publicUrl;
 }
 
