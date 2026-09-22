@@ -4,7 +4,8 @@
   "version": "1.0.0",
   "description": "UniAds Studio — gerador de cartões de visita e publicidade, com encomenda de impressão física via Gelato.",
   "scripts": {
-    "dev": "vercel dev"
+    "dev": "vercel dev",
+    "build": "echo 'Site estático — sem build necessário.'"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0",
