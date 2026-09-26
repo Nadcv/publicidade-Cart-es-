@@ -39,9 +39,12 @@ app.js                  CATEGORIES / TEMPLATES / FORMATS (dados) + estado do edi
                         renderização do board + projetos (localStorage) + exportação + checkout
 pedido-confirmado.html  Página de retorno do Stripe Checkout (consulta /api/order-status)
 api/
-  create-checkout-session.js  Recebe o design, grava a encomenda, cria a Stripe Checkout Session
+  create-checkout-session.js  Recebe o design, grava a encomenda (com a imagem em base64), cria a
+                              Stripe Checkout Session
   stripe-webhook.js           Confirma o pagamento e cria a encomenda na Gelato
   order-status.js             Consulta o estado de uma encomenda (usado por pedido-confirmado.html)
+  order-image.js              Serve a arte de impressão de uma encomenda (lida da base de dados) —
+                              é esta URL que é passada à Gelato para descarregar o ficheiro
   lib/{supabase,gelato,price}.js   Helpers dos três serviços externos
 supabase/schema.sql     Tabela `orders` (ver secção de monetização abaixo)
 ```
@@ -71,13 +74,18 @@ impressão sob encomenda com API pública, print-on-demand local ao destinatári
 ```
 Cliente preenche morada → gera PNG do cartão no browser
   → POST /api/create-checkout-session
-       (sobe o PNG para o Supabase Storage, grava a encomenda como "pending_payment",
-        cria uma Stripe Checkout Session)
+       (grava a encomenda como "pending_payment" com a imagem em base64 na própria
+        base de dados, cria uma Stripe Checkout Session)
   → cliente paga na página da Stripe
   → Stripe chama /api/stripe-webhook (checkout.session.completed)
-       (marca a encomenda como "paid", chama a Gelato Order API, marca "sent_to_print")
+       (marca a encomenda como "paid", chama a Gelato Order API — que descarrega a
+        imagem via /api/order-image?id=<id> — e marca "sent_to_print")
   → pedido-confirmado.html faz polling a /api/order-status até mostrar o estado final
 ```
+
+A imagem fica guardada como base64 na coluna `image_data` da tabela `orders` (não precisa de
+um bucket de Storage à parte) e é servida publicamente por `/api/order-image?id=<id>`, que é a
+URL que a Gelato usa para descarregar o ficheiro.
 
 ### Pôr a funcionar
 
@@ -86,8 +94,8 @@ mais simples (tudo com plano gratuito para começar):
 
 1. **Cria as contas**: [Stripe](https://dashboard.stripe.com) (modo de teste já chega para
    validar o fluxo), [Supabase](https://supabase.com) e [Gelato](https://dashboard.gelato.com).
-2. **Supabase**: cria um projeto, corre `supabase/schema.sql` no SQL Editor, e cria um bucket
-   de Storage público chamado `print-files` (Storage → New bucket).
+2. **Supabase**: cria um projeto e corre `supabase/schema.sql` no SQL Editor (não precisa de
+   nenhum bucket de Storage — a imagem fica na própria tabela `orders`).
 3. **Gelato**: confirma o `productUid` exato do cartão de visita que queres vender — usa a tua
    API key da Gelato para chamar `GET https://product.gelatoapis.com/v3/products:search`
    (filtra por "business card" no tamanho/acabamento desejado) e copia o `productUid`

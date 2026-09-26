@@ -14,7 +14,10 @@ create table if not exists orders (
   quantity integer not null,
   fields jsonb not null default '{}'::jsonb,
 
-  -- ficheiro pronto para impressão (guardado no Supabase Storage, bucket "print-files")
+  -- ficheiro pronto para impressão: guardado como base64 na própria base de dados
+  -- (mais simples que gerir um bucket de Storage à parte) e servido pelo endpoint
+  -- /api/order-image?id=<id>. image_url guarda essa URL pública para a Gelato descarregar.
+  image_data text,
   image_url text,
 
   -- morada de envio
@@ -36,6 +39,6 @@ create table if not exists orders (
 create index if not exists orders_stripe_session_id_idx on orders (stripe_session_id);
 create index if not exists orders_status_idx on orders (status);
 
--- Bucket de storage para os ficheiros de impressão (cria também pelo dashboard do Supabase
--- em Storage > New bucket > "print-files", público para leitura para a Gelato conseguir
--- descarregar o ficheiro pela URL).
+-- Se a tabela já existia sem a coluna image_data (versão anterior deste schema, que
+-- guardava a imagem num bucket de Storage), corre isto para adicionar a coluna em falta:
+-- alter table orders add column if not exists image_data text;

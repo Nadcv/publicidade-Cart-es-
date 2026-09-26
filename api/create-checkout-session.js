@@ -1,5 +1,5 @@
 var Stripe = require("stripe");
-var { getSupabaseAdmin, uploadPrintFile } = require("./lib/supabase");
+var { getSupabaseAdmin } = require("./lib/supabase");
 var { priceForQuantity, getAllowedQuantities } = require("./lib/price");
 
 var REQUIRED_SHIPPING_FIELDS = ["firstName", "lastName", "addressLine1", "city", "postCode", "country", "email"];
@@ -42,10 +42,19 @@ module.exports = async function handler(req, res) {
       return;
     }
 
+    var base64Data = imageBase64.split(",")[1];
+    var buffer = Buffer.from(base64Data, "base64");
+    if (buffer.length > 8 * 1024 * 1024) {
+      res.status(400).json({ error: "Imagem demasiado grande (máx. 8MB)." });
+      return;
+    }
+
     var currency = (process.env.CURRENCY || "eur").toLowerCase();
     var supabase = getSupabaseAdmin();
+    var siteUrl = process.env.PUBLIC_SITE_URL || ("https://" + req.headers.host);
 
-    // 1. Cria a linha da encomenda primeiro para termos um id.
+    // 1. Cria a encomenda já com a imagem guardada na própria base de dados
+    //    (evita depender de um bucket de Storage à parte).
     var insertResult = await supabase
       .from("orders")
       .insert({
@@ -53,6 +62,7 @@ module.exports = async function handler(req, res) {
         template_id: templateId,
         quantity: quantity,
         fields: fields,
+        image_data: base64Data,
         shipping_name: shipping.firstName + " " + shipping.lastName,
         shipping_address: shipping,
         contact_email: shipping.email,
@@ -65,19 +75,12 @@ module.exports = async function handler(req, res) {
     if (insertResult.error) throw insertResult.error;
     var order = insertResult.data;
 
-    // 2. Sobe o PNG de impressão para o Storage e guarda a URL pública na encomenda.
-    var base64Data = imageBase64.split(",")[1];
-    var buffer = Buffer.from(base64Data, "base64");
-    if (buffer.length > 8 * 1024 * 1024) {
-      res.status(400).json({ error: "Imagem demasiado grande (máx. 8MB)." });
-      return;
-    }
-    var imageUrl = await uploadPrintFile(order.id, buffer, "image/png");
+    // 2. A URL pública da imagem é o nosso próprio endpoint, que lê o image_data da BD.
+    var imageUrl = siteUrl + "/api/order-image?id=" + order.id;
     await supabase.from("orders").update({ image_url: imageUrl }).eq("id", order.id);
 
     // 3. Cria a sessão de pagamento Stripe.
     var stripe = Stripe(process.env.STRIPE_SECRET_KEY);
-    var siteUrl = process.env.PUBLIC_SITE_URL || ("https://" + req.headers.host);
     var session = await stripe.checkout.sessions.create({
       mode: "payment",
       line_items: [
