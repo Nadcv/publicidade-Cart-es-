@@ -5,11 +5,22 @@
 
 var ORDER_API_BASE = "https://order.gelatoapis.com/v4";
 
+// UID do produto Gelato por formato. GELATO_PRODUCT_UID (sem sufixo) continua a
+// funcionar como o UID do cartão de visita, por compatibilidade.
+function productUidForFormat(format) {
+  if (format === "flyer") return process.env.GELATO_PRODUCT_UID_FLYER;
+  return process.env.GELATO_PRODUCT_UID_CARD || process.env.GELATO_PRODUCT_UID;
+}
+
 async function createGelatoOrder(opts) {
   var apiKey = process.env.GELATO_API_KEY;
-  var productUid = process.env.GELATO_PRODUCT_UID;
+  var productUid = productUidForFormat(opts.format);
   if (!apiKey || !productUid) {
-    throw new Error("GELATO_API_KEY / GELATO_PRODUCT_UID em falta nas variáveis de ambiente.");
+    throw new Error(
+      "GELATO_API_KEY / UID do produto (" +
+        (opts.format === "flyer" ? "GELATO_PRODUCT_UID_FLYER" : "GELATO_PRODUCT_UID_CARD") +
+        ") em falta nas variáveis de ambiente."
+    );
   }
 
   var body = {
@@ -19,7 +30,7 @@ async function createGelatoOrder(opts) {
     currency: opts.currency.toUpperCase(),
     items: [
       {
-        itemReferenceId: opts.orderId + "-card",
+        itemReferenceId: opts.orderId + "-" + (opts.format || "card"),
         productUid: productUid,
         files: [{ type: "default", url: opts.imageUrl }],
         quantity: opts.quantity

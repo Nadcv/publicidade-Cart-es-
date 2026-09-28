@@ -25,31 +25,46 @@ Abra `http://localhost:8080`. Não precisa de `npm install`: é HTML/CSS/JS puro
   endereço atualizam a pré-visualização em tempo real; logotipo por upload (substitui o ícone
   do segmento) e cores primária/secundária personalizáveis por cima da paleta do modelo.
 - **Exportar**: PNG em alta resolução (via `html2canvas`, carregado por CDN — precisa de
-  internet) ou impressão direta do navegador.
+  internet), impressão direta do navegador, ou **partilhar** direto para outra app (Instagram,
+  WhatsApp, etc.) via Web Share API do navegador — em navegadores/dispositivos sem suporte,
+  cai automaticamente para download.
 - **Meus Projetos**: salvar, editar, duplicar e excluir projetos — persistidos no
   `localStorage` do navegador (nada é enviado a um servidor).
+- **Impressos físicos com cupão de desconto**: Cartão de Visita e Flyer A5 têm preços e
+  quantidades próprios; no checkout da Stripe o cliente pode inserir um código de desconto
+  (cupões geridos no dashboard da Stripe, não no código).
+- **Consulta de encomendas** (`minhas-encomendas.html`): o cliente escreve o e-mail usado na
+  compra e vê o estado de todos os pedidos que fez.
+- **Painel de administração** (`admin.html`, protegido por palavra-passe): lista todas as
+  encomendas (estado, formato, quantidade, valor, morada, e-mail) com paginação.
+- **E-mail de confirmação automático**: quando o pedido é enviado para impressão, o cliente
+  recebe um e-mail (via Resend) com o resumo da encomenda.
 
 ## Arquitetura
 
 ```
 index.html                Estrutura da página (hero, categorias, editor, projetos, checkout)
 pedido-confirmado.html    Página de retorno do Stripe Checkout (consulta /api/order-status)
+minhas-encomendas.html    Cliente consulta as suas encomendas pelo e-mail
+admin.html                Painel de administração (protegido por ADMIN_PASSWORD)
 
 assets/
   css/style.css           Tema da aplicação + sistema de "art board" (cartão/anúncio) themeable
                           via CSS custom properties (--tpl-primary, --tpl-bg, --tpl-icon, ...)
   js/app.js               CATEGORIES / TEMPLATES / FORMATS (dados) + estado do editor +
-                          renderização do board + projetos (localStorage) + exportação + checkout
+                          renderização do board + projetos (localStorage) + exportação/partilha + checkout
 
 api/                      Funções serverless (tem de ficar na raiz — é a pasta que a Vercel
                           deteta automaticamente para isto, não pode ser movida)
   create-checkout-session.js  Recebe o design, grava a encomenda (com a imagem em base64), cria a
-                              Stripe Checkout Session
-  stripe-webhook.js           Confirma o pagamento e cria a encomenda na Gelato
+                              Stripe Checkout Session (com cupões de desconto ativados)
+  stripe-webhook.js           Confirma o pagamento, cria a encomenda na Gelato, envia e-mail
   order-status.js             Consulta o estado de uma encomenda (usado por pedido-confirmado.html)
   order-image.js              Serve a arte de impressão de uma encomenda (lida da base de dados) —
                               é esta URL que é passada à Gelato para descarregar o ficheiro
-  lib/{supabase,gelato,price}.js   Helpers dos três serviços externos
+  my-orders.js                Lista as encomendas de um e-mail (usado por minhas-encomendas.html)
+  admin/orders.js             Lista todas as encomendas, paginado (usado por admin.html)
+  lib/{supabase,gelato,price,email}.js   Helpers dos serviços externos
 
 supabase/schema.sql       Tabela `orders` (ver secção de monetização abaixo)
 ```
@@ -69,23 +84,26 @@ template para garantir contraste — ver `TEMPLATES` em `app.js`.
 - **Projetos não sincronizam entre dispositivos**: ficam só no `localStorage` do navegador
   onde foram salvos — não há backend nem conta de usuário.
 
-## Monetização: cartões impressos (Stripe + Supabase + Gelato)
+## Monetização: cartões e flyers impressos (Stripe + Supabase + Gelato + Resend)
 
-No formato "Cartão de Visita", o editor mostra um botão **"Comprar cartões impressos"** que
-abre um checkout: o cliente escolhe quantidade e morada, paga via Stripe, e o pedido é
-enviado automaticamente para impressão e envio pela [Gelato](https://gelato.com) (rede de
-impressão sob encomenda com API pública, print-on-demand local ao destinatário).
+Nos formatos "Cartão de Visita" e "Flyer A5", o editor mostra um botão **"Comprar impressos"**
+que abre um checkout: o cliente escolhe quantidade (por formato — ver `PRICE_TABLE`) e morada,
+paga via Stripe (com campo de cupão de desconto), e o pedido é enviado automaticamente para
+impressão e envio pela [Gelato](https://gelato.com) (rede de impressão sob encomenda com API
+pública, print-on-demand local ao destinatário).
 
 ```
-Cliente preenche morada → gera PNG do cartão no browser
+Cliente preenche morada → gera PNG do design no browser
   → POST /api/create-checkout-session
        (grava a encomenda como "pending_payment" com a imagem em base64 na própria
         base de dados, cria uma Stripe Checkout Session)
-  → cliente paga na página da Stripe
+  → cliente paga na página da Stripe (pode aplicar um cupão de desconto)
   → Stripe chama /api/stripe-webhook (checkout.session.completed)
        (marca a encomenda como "paid", chama a Gelato Order API — que descarrega a
-        imagem via /api/order-image?id=<id> — e marca "sent_to_print")
+        imagem via /api/order-image?id=<id> — marca "sent_to_print" e envia o
+        e-mail de confirmação via Resend, se configurada)
   → pedido-confirmado.html faz polling a /api/order-status até mostrar o estado final
+  → o cliente pode depois consultar tudo em minhas-encomendas.html pelo e-mail
 ```
 
 A imagem fica guardada como base64 na coluna `image_data` da tabela `orders` (não precisa de
@@ -98,27 +116,46 @@ Isto deixa de ser só ficheiros estáticos: precisa de hosting com funções ser
 mais simples (tudo com plano gratuito para começar):
 
 1. **Cria as contas**: [Stripe](https://dashboard.stripe.com) (modo de teste já chega para
-   validar o fluxo), [Supabase](https://supabase.com) e [Gelato](https://dashboard.gelato.com).
+   validar o fluxo), [Supabase](https://supabase.com), [Gelato](https://dashboard.gelato.com)
+   e, opcionalmente, [Resend](https://resend.com) (e-mail de confirmação).
 2. **Supabase**: cria um projeto e corre `supabase/schema.sql` no SQL Editor (não precisa de
    nenhum bucket de Storage — a imagem fica na própria tabela `orders`).
-3. **Gelato**: confirma o `productUid` exato do cartão de visita que queres vender — usa a tua
-   API key da Gelato para chamar `GET https://product.gelatoapis.com/v3/products:search`
-   (filtra por "business card" no tamanho/acabamento desejado) e copia o `productUid`
-   devolvido. **Não uses o valor em `.env.example` sem confirmar** — é só um placeholder.
+3. **Gelato**: confirma o `productUid` exato de cada formato que queres vender (cartão e/ou
+   flyer) — usa a tua API key da Gelato para chamar
+   `GET https://product.gelatoapis.com/v3/products:search` (filtra por "business card" /
+   "flyer" no tamanho/acabamento desejado) e copia os `productUid` devolvidos para
+   `GELATO_PRODUCT_UID_CARD` / `GELATO_PRODUCT_UID_FLYER`. **Não uses os valores em
+   `.env.example` sem confirmar** — são só placeholders.
 4. **Preço**: define `PRICE_TABLE` no `.env` só depois de saberes o custo real da Gelato
    (impressão + envio) para o destino que vais vender — os valores de exemplo não são reais.
-5. **Deploy**: importa este repositório na [Vercel](https://vercel.com) (deteta o `/api`
+5. **Cupões de desconto** (opcional): cria em Stripe Dashboard → Product catalog → Coupons /
+   Promotion codes — não precisa de nenhuma alteração no código, já está ativado no checkout.
+6. **E-mail de confirmação** (opcional): cria uma conta Resend, gera uma API key e define
+   `RESEND_API_KEY`. Sem domínio próprio verificado, `onboarding@resend.dev` já funciona para
+   testar; para produção, verifica o teu domínio na Resend e atualiza `EMAIL_FROM`.
+7. **Painel de administração**: define `ADMIN_PASSWORD` com uma palavra-passe só tua — sem
+   isto, `/admin.html` fica desativado (o endpoint responde 503).
+8. **Deploy**: importa este repositório na [Vercel](https://vercel.com) (deteta o `/api`
    automaticamente como funções serverless e serve o resto como site estático), copia
    `.env.example` para as variáveis de ambiente do projeto na Vercel com os valores reais.
-6. **Webhook da Stripe**: no dashboard da Stripe, cria um endpoint de webhook apontando para
+9. **Webhook da Stripe**: no dashboard da Stripe, cria um endpoint de webhook apontando para
    `https://<o-teu-domínio>/api/stripe-webhook`, subscrito ao evento `checkout.session.completed`,
    e copia o "Signing secret" para `STRIPE_WEBHOOK_SECRET`.
 
 ### Limitações
 
-- Preços e o `productUid` da Gelato em `.env.example` são **placeholders**, não valores
+- Preços e os `productUid` da Gelato em `.env.example` são **placeholders**, não valores
   verificados — confirma-os antes de aceitar pagamentos reais.
 - Sem reconciliação automática: se a chamada à Gelato falhar depois do pagamento já cobrado
   (ex: API fora do ar), a encomenda fica marcada `failed` com o erro em `orders.error_message`
   — precisa de resolução manual (reprocessar ou reembolsar pelo dashboard da Stripe).
-- Sem envio de e-mail de confirmação próprio: depende dos recibos automáticos da Stripe.
+- **Painel de admin com autenticação simples**: uma única palavra-passe partilhada
+  (`ADMIN_PASSWORD`), guardada em `sessionStorage` no browser — suficiente para uso pessoal,
+  mas sem contas de utilizador nem controlo de permissões por pessoa.
+- **Partilha direta** (`navigator.share`) só funciona em navegadores/dispositivos com suporte
+  a Web Share API com ficheiros (maioria dos telemóveis modernos); no desktop ou em
+  navegadores sem suporte, cai automaticamente para download da imagem.
+- **Publicação automática no Instagram não está incluída** — a API oficial da Meta exige
+  revisão de app e uma conta Instagram Business ligada; a partilha via `navigator.share` abre
+  o menu nativo de partilha do dispositivo (o Instagram aparece lá como uma das opções, mas a
+  publicação em si é feita pela app do Instagram, não por este site).

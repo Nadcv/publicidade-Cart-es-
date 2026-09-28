@@ -11,6 +11,7 @@ create table if not exists orders (
 
   -- dados do design (para reimpressão/consulta, não é a fonte de verdade do preço)
   template_id text not null,
+  product_format text not null default 'card' check (product_format in ('card', 'flyer')),
   quantity integer not null,
   fields jsonb not null default '{}'::jsonb,
 
@@ -39,6 +40,7 @@ create table if not exists orders (
 create index if not exists orders_stripe_session_id_idx on orders (stripe_session_id);
 create index if not exists orders_status_idx on orders (status);
 
--- Se a tabela já existia sem a coluna image_data (versão anterior deste schema, que
--- guardava a imagem num bucket de Storage), corre isto para adicionar a coluna em falta:
+-- Migrações para quem já tinha a tabela criada antes destas colunas existirem:
 -- alter table orders add column if not exists image_data text;
+-- alter table orders add column if not exists product_format text not null default 'card'
+--   check (product_format in ('card', 'flyer'));

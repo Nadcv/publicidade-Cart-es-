@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<title>As Minhas Encomendas — UniAds Studio</title>
+<link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+<div id="app">
+  <header class="site-header">
+    <div class="brand">
+      <a href="index.html" style="text-decoration:none;color:inherit;">
+        <span class="brand-mark">Uni<b>Ads</b></span>
+        <span class="brand-sub">Studio</span>
+      </a>
+    </div>
+  </header>
+
+  <section class="section" style="max-width:640px;">
+    <div class="section-head">
+      <h2>As minhas encomendas</h2>
+      <p>Escreve o e-mail que usaste na compra para veres o estado dos teus pedidos.</p>
+    </div>
+
+    <form id="lookup-form" class="editor-panel" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+      <label style="flex:1;min-width:220px;display:flex;flex-direction:column;gap:5px;font-size:.8rem;color:var(--text-soft);">
+        E-mail
+        <input type="email" id="lookup-email" required placeholder="o-teu-email@exemplo.com" />
+      </label>
+      <button type="submit" class="btn btn-primary">Ver encomendas</button>
+    </form>
+
+    <p id="lookup-status" class="editor-status" role="status" aria-live="polite"></p>
+
+    <div id="orders-list" class="projects-grid" style="margin-top:20px;"></div>
+  </section>
+
+  <footer class="site-footer">
+    <span>UniAds Studio — parte do ecossistema Unisocial.</span>
+  </footer>
+</div>
+
+<script>
+(function () {
+  var STATUS_LABEL = {
+    pending_payment: "A aguardar pagamento",
+    paid: "Pago — a preparar impressão",
+    sent_to_print: "Enviado para impressão",
+    failed: "Problema no processamento (contacta-nos)",
+    canceled: "Cancelado"
+  };
+  var FORMAT_LABEL = { card: "Cartão de Visita", flyer: "Flyer A5" };
+
+  var form = document.getElementById("lookup-form");
+  var statusEl = document.getElementById("lookup-status");
+  var listEl = document.getElementById("orders-list");
+
+  function escapeHtml(str) {
+    return String(str == null ? "" : str).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
+  function renderOrders(orders) {
+    if (!orders.length) {
+      listEl.innerHTML = '<p class="empty-note">Nenhuma encomenda encontrada para este e-mail.</p>';
+      return;
+    }
+    listEl.innerHTML = orders.map(function (o) {
+      var price = (o.amount_cents / 100).toLocaleString("pt-PT", { style: "currency", currency: (o.currency || "eur").toUpperCase() });
+      var date = new Date(o.created_at).toLocaleDateString("pt-PT");
+      var status = STATUS_LABEL[o.status] || o.status;
+      var format = FORMAT_LABEL[o.product_format] || o.product_format;
+      return (
+        '<div class="project-card">' +
+        '<div class="project-info">' +
+        "<strong>" + escapeHtml(format) + " · " + o.quantity + " un.</strong>" +
+        "<span>" + escapeHtml(status) + "</span>" +
+        "<span>" + price + " · " + date + "</span>" +
+        '<span style="font-size:.68rem;opacity:.7;">Ref: ' + escapeHtml(o.id) + "</span>" +
+        "</div></div>"
+      );
+    }).join("");
+  }
+
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    var email = document.getElementById("lookup-email").value.trim();
+    statusEl.textContent = "A procurar...";
+    listEl.innerHTML = "";
+
+    fetch("/api/my-orders?email=" + encodeURIComponent(email))
+      .then(function (r) { return r.json().then(function (data) { return { ok: r.ok, data: data }; }); })
+      .then(function (result) {
+        if (!result.ok) throw new Error(result.data.error || "Falha ao consultar.");
+        statusEl.textContent = "";
+        renderOrders(result.data.orders || []);
+      })
+      .catch(function (err) {
+        statusEl.textContent = err.message || "Não foi possível consultar as encomendas.";
+      });
+  });
+})();
+</script>
+</body>
+</html>

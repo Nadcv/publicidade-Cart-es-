@@ -182,10 +182,10 @@
   ];
 
   var FORMATS = [
-    { id: "card", label: "Cartão de Visita", type: "card" },
-    { id: "post", label: "Post Instagram", type: "ad" },
-    { id: "story", label: "Story", type: "ad" },
-    { id: "flyer", label: "Flyer A5", type: "ad" }
+    { id: "card", label: "Cartão de Visita", type: "card", printable: true, printQuantities: [100, 250, 500] },
+    { id: "post", label: "Post Instagram", type: "ad", printable: false },
+    { id: "story", label: "Story", type: "ad", printable: false },
+    { id: "flyer", label: "Flyer A5", type: "ad", printable: true, printQuantities: [50, 100, 250] }
   ];
 
   var FIELD_KEYS = ["nome", "cargo", "empresa", "slogan", "telefone", "email", "site", "instagram", "endereco"];
@@ -512,7 +512,7 @@
     renderSideTabs();
     renderBoard();
     var buyBlock = $("#buy-print-block");
-    if (buyBlock) buyBlock.style.display = getFormat(id).type === "card" ? "" : "none";
+    if (buyBlock) buyBlock.style.display = getFormat(id).printable ? "" : "none";
   }
 
   /* ---------------------------------------------------------
@@ -666,6 +666,42 @@
     });
   }
 
+  function shareBoard() {
+    if (typeof window.html2canvas !== "function") {
+      flashStatus("Não foi possível carregar o exportador de imagem (sem conexão?).");
+      return;
+    }
+    var board = $("#art-board");
+    flashStatus("A preparar imagem para partilhar...");
+    window.html2canvas(board, { scale: 3, backgroundColor: null, useCORS: true }).then(function (canvas) {
+      canvas.toBlob(function (blob) {
+        if (!blob) { flashStatus("Falha ao gerar a imagem."); return; }
+        var fileName = fileBaseName() + "-" + state.formatId + ".png";
+        var file = new File([blob], fileName, { type: "image/png" });
+        var shareData = {
+          files: [file],
+          title: state.fields.empresa || "UniAds Studio",
+          text: state.fields.slogan || "Feito com UniAds Studio"
+        };
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          navigator.share(shareData).then(function () {
+            flashStatus("Partilhado com sucesso.");
+          }).catch(function (err) {
+            if (err && err.name !== "AbortError") flashStatus("Não foi possível partilhar.");
+          });
+        } else {
+          flashStatus("Este navegador não suporta partilha direta — a imagem foi baixada.");
+          var link = document.createElement("a");
+          link.download = fileName;
+          link.href = canvas.toDataURL("image/png");
+          link.click();
+        }
+      }, "image/png");
+    }).catch(function () {
+      flashStatus("Falha ao gerar a imagem. Tente novamente.");
+    });
+  }
+
   function printBoard() {
     var existing = document.getElementById("print-target");
     if (existing) existing.remove();
@@ -718,9 +754,15 @@
   }
 
   function openCheckoutModal() {
-    if (getFormat(state.formatId).type !== "card") return;
+    var format = getFormat(state.formatId);
+    if (!format.printable) return;
     $("#checkout-status").textContent = "";
     $("#co-email").value = "";
+    var qtySelect = $("#co-quantity");
+    qtySelect.innerHTML = format.printQuantities.map(function (q) {
+      return '<option value="' + q + '">' + q + " unidades</option>";
+    }).join("");
+    $("#checkout-title").textContent = "Comprar " + format.label + " impressos";
     $("#checkout-modal").classList.remove("hidden");
   }
   function closeCheckoutModal() { $("#checkout-modal").classList.add("hidden"); }
@@ -759,6 +801,7 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             templateId: state.templateId,
+            format: state.formatId,
             quantity: parseInt($("#co-quantity").value, 10),
             fields: state.fields,
             imageBase64: imageBase64,
@@ -816,6 +859,11 @@
     $("#save-project").addEventListener("click", saveCurrentProject);
     $("#download-png").addEventListener("click", downloadPNG);
     $("#print-board").addEventListener("click", printBoard);
+    var shareBtn = $("#share-board");
+    if (shareBtn) {
+      if (navigator.share) shareBtn.addEventListener("click", shareBoard);
+      else shareBtn.style.display = "none";
+    }
     $("#new-project-btn").addEventListener("click", newProject);
 
     $("#buy-print-btn").addEventListener("click", openCheckoutModal);

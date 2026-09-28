@@ -3,6 +3,7 @@ var { getSupabaseAdmin } = require("./lib/supabase");
 var { priceForQuantity, getAllowedQuantities } = require("./lib/price");
 
 var REQUIRED_SHIPPING_FIELDS = ["firstName", "lastName", "addressLine1", "city", "postCode", "country", "email"];
+var ALLOWED_FORMATS = ["card", "flyer"];
 
 module.exports = async function handler(req, res) {
   if (req.method !== "POST") {
@@ -13,6 +14,7 @@ module.exports = async function handler(req, res) {
   try {
     var body = req.body || {};
     var templateId = String(body.templateId || "").slice(0, 60);
+    var format = ALLOWED_FORMATS.indexOf(body.format) !== -1 ? body.format : "card";
     var quantity = parseInt(body.quantity, 10);
     var fields = body.fields && typeof body.fields === "object" ? body.fields : {};
     var shipping = body.shipping && typeof body.shipping === "object" ? body.shipping : {};
@@ -23,9 +25,9 @@ module.exports = async function handler(req, res) {
       return;
     }
 
-    var amountCents = priceForQuantity(quantity);
+    var amountCents = priceForQuantity(format, quantity);
     if (amountCents === null) {
-      res.status(400).json({ error: "Quantidade inválida. Opções: " + getAllowedQuantities().join(", ") + "." });
+      res.status(400).json({ error: "Quantidade inválida. Opções: " + getAllowedQuantities(format).join(", ") + "." });
       return;
     }
 
@@ -60,6 +62,7 @@ module.exports = async function handler(req, res) {
       .insert({
         status: "pending_payment",
         template_id: templateId,
+        product_format: format,
         quantity: quantity,
         fields: fields,
         image_data: base64Data,
@@ -80,9 +83,12 @@ module.exports = async function handler(req, res) {
     await supabase.from("orders").update({ image_url: imageUrl }).eq("id", order.id);
 
     // 3. Cria a sessão de pagamento Stripe.
+    var productName = (format === "flyer" ? "Flyers A5 impressos" : "Cartões de visita impressos") +
+      " (" + quantity + " un.) — " + templateId;
     var stripe = Stripe(process.env.STRIPE_SECRET_KEY);
     var session = await stripe.checkout.sessions.create({
       mode: "payment",
+      allow_promotion_codes: true,
       line_items: [
         {
           quantity: 1,
@@ -90,7 +96,7 @@ module.exports = async function handler(req, res) {
             currency: currency,
             unit_amount: amountCents,
             product_data: {
-              name: "Cartões de visita impressos (" + quantity + " un.) — " + templateId,
+              name: productName,
               description: (fields.empresa || fields.nome || "UniAds Studio")
             }
           }

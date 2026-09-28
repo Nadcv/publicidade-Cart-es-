@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<meta name="robots" content="noindex, nofollow" />
+<title>Admin — UniAds Studio</title>
+<link rel="stylesheet" href="assets/css/style.css" />
+<style>
+  .admin-table { width: 100%; border-collapse: collapse; font-size: .82rem; }
+  .admin-table th, .admin-table td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  .admin-table th { color: var(--text-soft); font-weight: 600; font-size: .72rem; text-transform: uppercase; letter-spacing: .04em; }
+  .admin-table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius); }
+  .status-pill { padding: 3px 9px; border-radius: 999px; font-size: .7rem; font-weight: 600; }
+  .status-pending_payment { background: #3a3320; color: #e0c24a; }
+  .status-paid { background: #1e3a2e; color: #4cd97b; }
+  .status-sent_to_print { background: #1e2f3a; color: #4ab0e0; }
+  .status-failed { background: #3a1e1e; color: #e05a5a; }
+  .status-canceled { background: #2a2a2a; color: #999; }
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="site-header">
+    <div class="brand">
+      <a href="index.html" style="text-decoration:none;color:inherit;">
+        <span class="brand-mark">Uni<b>Ads</b></span>
+        <span class="brand-sub">Studio</span>
+      </a>
+    </div>
+  </header>
+
+  <section class="section" style="max-width:1100px;">
+    <div class="section-head">
+      <h2>Painel de Administração</h2>
+      <p>Todas as encomendas de cartões e flyers impressos.</p>
+    </div>
+
+    <div id="login-box" class="editor-panel" style="max-width:360px;display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+      <label style="flex:1;min-width:200px;display:flex;flex-direction:column;gap:5px;font-size:.8rem;color:var(--text-soft);">
+        Palavra-passe
+        <input type="password" id="admin-password" />
+      </label>
+      <button type="button" id="login-btn" class="btn btn-primary">Entrar</button>
+    </div>
+    <p id="admin-status" class="editor-status" role="status" aria-live="polite"></p>
+
+    <div id="orders-wrap" style="display:none;">
+      <div class="admin-table-wrap">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Data</th><th>Estado</th><th>Formato</th><th>Qtd</th><th>Total</th>
+              <th>Cliente</th><th>E-mail</th><th>Cidade/País</th><th>Ref.</th>
+            </tr>
+          </thead>
+          <tbody id="orders-tbody"></tbody>
+        </table>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:center;margin-top:16px;">
+        <button type="button" id="prev-page" class="btn btn-ghost btn-sm">&larr; Anterior</button>
+        <span id="page-label" style="align-self:center;color:var(--text-soft);font-size:.8rem;"></span>
+        <button type="button" id="next-page" class="btn btn-ghost btn-sm">Seguinte &rarr;</button>
+      </div>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <span>UniAds Studio — parte do ecossistema Unisocial.</span>
+  </footer>
+</div>
+
+<script>
+(function () {
+  var STATUS_LABEL = {
+    pending_payment: "Aguarda pagamento",
+    paid: "Pago",
+    sent_to_print: "Na impressão",
+    failed: "Falhou",
+    canceled: "Cancelado"
+  };
+  var FORMAT_LABEL = { card: "Cartão", flyer: "Flyer A5" };
+  var STORAGE_KEY = "uniads_admin_password";
+  var state = { page: 1, total: 0, pageSize: 50 };
+
+  var loginBox = document.getElementById("login-box");
+  var statusEl = document.getElementById("admin-status");
+  var ordersWrap = document.getElementById("orders-wrap");
+  var tbody = document.getElementById("orders-tbody");
+  var pageLabel = document.getElementById("page-label");
+
+  function escapeHtml(str) {
+    return String(str == null ? "" : str).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
+  function getPassword() {
+    try { return sessionStorage.getItem(STORAGE_KEY) || ""; } catch (e) { return ""; }
+  }
+  function setPassword(pw) {
+    try { sessionStorage.setItem(STORAGE_KEY, pw); } catch (e) { /* sem sessionStorage, segue sem guardar */ }
+  }
+
+  function renderOrders(orders) {
+    tbody.innerHTML = orders.map(function (o) {
+      var price = (o.amount_cents / 100).toLocaleString("pt-PT", { style: "currency", currency: (o.currency || "eur").toUpperCase() });
+      var date = new Date(o.created_at).toLocaleDateString("pt-PT");
+      var addr = o.shipping_address || {};
+      var cityCountry = [addr.city, addr.country].filter(Boolean).join(" / ");
+      return (
+        "<tr>" +
+        "<td>" + date + "</td>" +
+        '<td><span class="status-pill status-' + o.status + '">' + (STATUS_LABEL[o.status] || o.status) + "</span></td>" +
+        "<td>" + (FORMAT_LABEL[o.product_format] || o.product_format) + "</td>" +
+        "<td>" + o.quantity + "</td>" +
+        "<td>" + price + "</td>" +
+        "<td>" + escapeHtml(o.shipping_name) + "</td>" +
+        "<td>" + escapeHtml(o.contact_email) + "</td>" +
+        "<td>" + escapeHtml(cityCountry) + "</td>" +
+        '<td style="font-size:.68rem;opacity:.7;">' + escapeHtml(o.id.slice(0, 8)) + "</td>" +
+        "</tr>"
+      );
+    }).join("");
+  }
+
+  function loadOrders() {
+    var pw = getPassword();
+    statusEl.textContent = "A carregar...";
+    fetch("/api/admin/orders?page=" + state.page, { headers: { "X-Admin-Password": pw } })
+      .then(function (r) { return r.json().then(function (data) { return { ok: r.ok, data: data }; }); })
+      .then(function (result) {
+        if (!result.ok) throw new Error(result.data.error || "Falha ao consultar.");
+        statusEl.textContent = "";
+        loginBox.style.display = "none";
+        ordersWrap.style.display = "block";
+        state.total = result.data.total;
+        state.pageSize = result.data.pageSize;
+        renderOrders(result.data.orders);
+        var pages = Math.max(1, Math.ceil(state.total / state.pageSize));
+        pageLabel.textContent = "Página " + state.page + " de " + pages + " (" + state.total + " encomendas)";
+      })
+      .catch(function (err) {
+        statusEl.textContent = err.message || "Não foi possível entrar.";
+        ordersWrap.style.display = "none";
+        loginBox.style.display = "flex";
+      });
+  }
+
+  document.getElementById("login-btn").addEventListener("click", function () {
+    setPassword(document.getElementById("admin-password").value);
+    state.page = 1;
+    loadOrders();
+  });
+  document.getElementById("admin-password").addEventListener("keydown", function (e) {
+    if (e.key === "Enter") document.getElementById("login-btn").click();
+  });
+  document.getElementById("prev-page").addEventListener("click", function () {
+    if (state.page > 1) { state.page--; loadOrders(); }
+  });
+  document.getElementById("next-page").addEventListener("click", function () {
+    if (state.page * state.pageSize < state.total) { state.page++; loadOrders(); }
+  });
+
+  if (getPassword()) loadOrders();
+})();
+</script>
+</body>
+</html>

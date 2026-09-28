@@ -1,6 +1,7 @@
 var Stripe = require("stripe");
 var { getSupabaseAdmin } = require("./lib/supabase");
 var { createGelatoOrder } = require("./lib/gelato");
+var { sendEmail, orderConfirmationHtml } = require("./lib/email");
 
 function readRawBody(req) {
   return new Promise(function (resolve, reject) {
@@ -60,6 +61,7 @@ module.exports = async function handler(req, res) {
     var addr = order.shipping_address;
     var gelatoOrder = await createGelatoOrder({
       orderId: order.id,
+      format: order.product_format,
       currency: order.currency,
       quantity: order.quantity,
       imageUrl: order.image_url,
@@ -70,6 +72,14 @@ module.exports = async function handler(req, res) {
       .from("orders")
       .update({ status: "sent_to_print", gelato_order_id: gelatoOrder.id, updated_at: new Date().toISOString() })
       .eq("id", orderId);
+
+    // E-mail de confirmação é best-effort: uma falha aqui não deve marcar a encomenda
+    // como falhada, já foi paga e enviada para impressão com sucesso.
+    try {
+      await sendEmail(order.contact_email, "O teu pedido UniAds Studio foi confirmado", orderConfirmationHtml(order));
+    } catch (emailErr) {
+      console.error("Falha ao enviar e-mail de confirmação (order_id=" + orderId + "):", emailErr);
+    }
   } catch (err) {
     console.error("Falha ao processar encomenda paga (order_id=" + orderId + "):", err);
     await supabase
