@@ -190,6 +190,29 @@
 
   var FIELD_KEYS = ["nome", "cargo", "empresa", "slogan", "telefone", "email", "site", "instagram", "endereco"];
 
+  // Secções principais alternadas por botão (visual "uma de cada vez", em vez de scroll longo).
+  var SECTION_IDS = ["categorias", "editor", "projetos", "ajuda"];
+
+  function showSection(id, skipScroll) {
+    if (SECTION_IDS.indexOf(id) === -1) return;
+    SECTION_IDS.forEach(function (sid) {
+      var el = document.getElementById(sid);
+      if (el) el.classList.toggle("is-active", sid === id);
+    });
+    document.querySelectorAll('[data-nav][data-section]').forEach(function (btn) {
+      btn.classList.toggle("active", btn.getAttribute("data-section") === id);
+    });
+    if (!skipScroll) {
+      var header = document.querySelector(".site-header");
+      var target = document.getElementById(id);
+      if (target) {
+        var y = target.getBoundingClientRect().top + window.pageYOffset - (header ? header.offsetHeight : 0) - 8;
+        window.scrollTo({ top: y, behavior: "smooth" });
+      }
+    }
+    try { history.replaceState(null, "", "#" + id); } catch (e) { /* file:// ou navegador antigo, ignora */ }
+  }
+
   /* ---------------------------------------------------------
      Estado
      --------------------------------------------------------- */
@@ -493,7 +516,7 @@
     renderTemplatePicker(catId);
     state.fields = Object.assign({}, getCategory(catId).defaults);
     selectTemplate(list[0].id, true);
-    if (scroll) document.getElementById("editor").scrollIntoView({ behavior: "smooth" });
+    if (scroll) showSection("editor");
   }
 
   function selectTemplate(id, skipFieldReset) {
@@ -572,7 +595,7 @@
     renderTemplatePicker(state.templateId ? getTemplate(state.templateId).category : "all");
     fillFormFromState();
     renderBoard();
-    document.getElementById("editor").scrollIntoView({ behavior: "smooth" });
+    showSection("editor");
     flashStatus("Projeto \"" + p.name + "\" carregado no editor.");
   }
 
@@ -831,7 +854,7 @@
     state.side = "front";
     applyCategory(CATEGORIES[0].id, false);
     selectFormat("card");
-    document.getElementById("editor").scrollIntoView({ behavior: "smooth" });
+    showSection("editor");
     flashStatus("Novo projeto iniciado.");
   }
 
@@ -870,7 +893,15 @@
     $("#checkout-close").addEventListener("click", closeCheckoutModal);
     $("#checkout-modal").addEventListener("click", function (e) { if (e.target.id === "checkout-modal") closeCheckoutModal(); });
     $("#checkout-form").addEventListener("submit", submitCheckout);
-    $("#buy-print-block").style.display = getFormat(state.formatId).type === "card" ? "" : "none";
+    $("#buy-print-block").style.display = getFormat(state.formatId).printable ? "" : "none";
+
+    document.querySelectorAll('[data-nav][data-section]').forEach(function (btn) {
+      btn.addEventListener("click", function () { showSection(btn.getAttribute("data-section")); });
+    });
+    var initialSection = SECTION_IDS.indexOf(window.location.hash.slice(1)) !== -1
+      ? window.location.hash.slice(1)
+      : "categorias";
+    showSection(initialSection, true);
   }
 
   document.addEventListener("DOMContentLoaded", init);

@@ -65,9 +65,20 @@ button { font-family: inherit; }
 .brand-mark { font-size: 1.3rem; font-weight: 800; letter-spacing: -.02em; }
 .brand-mark b { color: var(--accent); }
 .brand-sub { font-size: .78rem; color: var(--text-soft); text-transform: uppercase; letter-spacing: .12em; }
-.site-nav { display: flex; gap: 22px; flex: 1; justify-content: center; }
-.site-nav a { font-size: .92rem; color: var(--text-soft); font-weight: 500; }
-.site-nav a:hover { color: var(--text); }
+.site-nav { display: flex; gap: 6px; flex: 1; justify-content: center; }
+.site-nav a, .nav-btn {
+  font-size: .92rem; color: var(--text-soft); font-weight: 500; white-space: nowrap;
+  background: none; border: 1px solid transparent; border-radius: 999px; padding: 7px 14px;
+  cursor: pointer; font-family: inherit; transition: color .15s ease, background .15s ease, border-color .15s ease;
+}
+.site-nav a:hover, .nav-btn:hover { color: var(--text); }
+.nav-btn.active { color: var(--text); background: var(--bg-2); border-color: var(--border); }
+.nav-btn.nav-link { border: none; }
+
+/* ---------- Alternância de secções (um botão de cada vez, visual mais limpo) ---------- */
+.section { display: none; }
+.section.is-active { display: block; animation: section-fade-in .25s ease; }
+@keyframes section-fade-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 
 /* ---------- Hero ---------- */
 .hero {
@@ -326,7 +337,8 @@ button { font-family: inherit; }
 @media (max-width: 860px) {
   .hero { grid-template-columns: 1fr; padding-top: 40px; }
   .hero-preview { order: -1; height: 260px; }
-  .site-nav { display: none; }
+  .site-nav { position: static; justify-content: flex-start; overflow-x: auto; gap: 14px; padding-bottom: 2px; flex: none; width: 100%; order: 3; }
+  .site-header { flex-wrap: wrap; }
   .field-grid { grid-template-columns: 1fr; }
   .template-picker { grid-template-columns: 1fr 1fr; }
 }
