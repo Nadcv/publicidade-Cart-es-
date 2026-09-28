@@ -44,3 +44,17 @@ create index if not exists orders_status_idx on orders (status);
 -- alter table orders add column if not exists image_data text;
 -- alter table orders add column if not exists product_format text not null default 'card'
 --   check (product_format in ('card', 'flyer'));
+
+-- Depoimentos de clientes, adicionados manualmente pelo dono do site em admin.html
+-- (nunca gerados automaticamente — evita mostrar avaliações que não são reais).
+create table if not exists testimonials (
+  id uuid primary key default gen_random_uuid(),
+  created_at timestamptz not null default now(),
+  author_name text not null,
+  company text,
+  quote text not null,
+  rating integer check (rating between 1 and 5),
+  approved boolean not null default true
+);
+
+create index if not exists testimonials_approved_idx on testimonials (approved);

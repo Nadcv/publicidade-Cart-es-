@@ -1,12 +1,5 @@
-var crypto = require("crypto");
 var { getSupabaseAdmin } = require("../lib/supabase");
-
-function passwordMatches(given, expected) {
-  var a = Buffer.from(String(given || ""));
-  var b = Buffer.from(String(expected || ""));
-  if (a.length !== b.length) return false;
-  return crypto.timingSafeEqual(a, b);
-}
+var { requireAdmin } = require("../lib/adminAuth");
 
 // Lista todas as encomendas para o painel de administração. Protegido por uma
 // palavra-passe simples (header X-Admin-Password), definida em ADMIN_PASSWORD.
@@ -16,17 +9,7 @@ module.exports = async function handler(req, res) {
     return;
   }
 
-  var expected = process.env.ADMIN_PASSWORD;
-  if (!expected) {
-    res.status(503).json({ error: "Painel de administração não configurado (falta ADMIN_PASSWORD)." });
-    return;
-  }
-
-  var given = req.headers["x-admin-password"];
-  if (!passwordMatches(given, expected)) {
-    res.status(401).json({ error: "Palavra-passe incorreta." });
-    return;
-  }
+  if (!requireAdmin(req, res)) return;
 
   try {
     var supabase = getSupabaseAdmin();
@@ -47,7 +30,33 @@ module.exports = async function handler(req, res) {
 
     if (result.error) throw result.error;
 
-    res.status(200).json({ orders: result.data || [], total: result.count || 0, page: page, pageSize: pageSize });
+    // Resumo: receita e contagem por estado, calculados sobre até 2000 encomendas mais
+    // recentes (suficiente para um pequeno negócio; evita paginar tudo só para somar).
+    var statsResult = await supabase
+      .from("orders")
+      .select("status, amount_cents, currency, created_at")
+      .order("created_at", { ascending: false })
+      .limit(2000);
+    if (statsResult.error) throw statsResult.error;
+
+    var now = new Date();
+    var monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+    var summary = {
+      pendingCount: 0,
+      totalOrders: statsResult.data.length,
+      revenueCentsTotal: 0,
+      revenueCentsMonth: 0,
+      currency: (statsResult.data[0] && statsResult.data[0].currency) || (process.env.CURRENCY || "eur")
+    };
+    statsResult.data.forEach(function (o) {
+      if (o.status === "pending_payment") summary.pendingCount++;
+      if (o.status === "paid" || o.status === "sent_to_print") {
+        summary.revenueCentsTotal += o.amount_cents;
+        if (new Date(o.created_at).getTime() >= monthStart) summary.revenueCentsMonth += o.amount_cents;
+      }
+    });
+
+    res.status(200).json({ orders: result.data || [], total: result.count || 0, page: page, pageSize: pageSize, summary: summary });
   } catch (err) {
     console.error("admin/orders error:", err);
     res.status(500).json({ error: "Não foi possível consultar as encomendas." });

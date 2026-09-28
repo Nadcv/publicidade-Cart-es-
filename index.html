@@ -5,6 +5,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
 <title>UniAds Studio — Cartões de Visita e Publicidade</title>
 <meta name="description" content="Crie cartões de visita e artes publicitárias profissionais para qualquer segmento: companhias aéreas, casamentos, restaurantes, imobiliárias e muito mais." />
+
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="UniAds Studio" />
+<meta property="og:title" content="UniAds Studio — Cartões de Visita e Publicidade" />
+<meta property="og:description" content="Crie cartões de visita e artes publicitárias profissionais para qualquer segmento: companhias aéreas, casamentos, restaurantes, imobiliárias e muito mais." />
+<meta property="og:image" content="assets/og-image.png" />
+<meta property="og:url" content="https://publicidade-cart-es.vercel.app" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="UniAds Studio — Cartões de Visita e Publicidade" />
+<meta name="twitter:description" content="Crie cartões de visita e artes publicitárias profissionais para qualquer segmento." />
+<meta name="twitter:image" content="assets/og-image.png" />
+
+<script>try{document.documentElement.setAttribute("data-theme",localStorage.getItem("uniads_theme")==="light"?"light":"dark")}catch(e){}</script>
 <link rel="stylesheet" href="assets/css/style.css" />
 </head>
 <body>
@@ -17,30 +30,37 @@
       <span class="brand-sub">Studio</span>
     </div>
     <nav class="site-nav">
-      <button type="button" class="nav-btn" data-nav data-section="categorias">Segmentos</button>
-      <button type="button" class="nav-btn" data-nav data-section="editor">Editor</button>
-      <button type="button" class="nav-btn" data-nav data-section="projetos">Meus Projetos</button>
-      <button type="button" class="nav-btn" data-nav data-section="ajuda">Como Funciona</button>
-      <a href="minhas-encomendas.html" class="nav-btn nav-link">Minhas Encomendas</a>
+      <button type="button" class="nav-btn" data-nav data-section="categorias" data-i18n="nav.segmentos">Segmentos</button>
+      <button type="button" class="nav-btn" data-nav data-section="editor" data-i18n="nav.editor">Editor</button>
+      <button type="button" class="nav-btn" data-nav data-section="projetos" data-i18n="nav.projetos">Meus Projetos</button>
+      <button type="button" class="nav-btn" data-nav data-section="ajuda" data-i18n="nav.ajuda">Como Funciona</button>
+      <button type="button" class="nav-btn" data-nav data-section="depoimentos" data-i18n="nav.depoimentos">Depoimentos</button>
+      <a href="minhas-encomendas.html" class="nav-btn nav-link" data-i18n="nav.encomendas">Minhas Encomendas</a>
     </nav>
-    <button id="new-project-btn" class="btn btn-primary">+ Novo Projeto</button>
+    <select id="lang-select" class="lang-select" title="Idioma / Language / Idioma">
+      <option value="pt">PT</option>
+      <option value="en">EN</option>
+      <option value="es">ES</option>
+    </select>
+    <button id="theme-toggle" class="btn btn-ghost btn-sm" type="button" title="Alternar tema claro/escuro">Modo claro</button>
+    <button id="new-project-btn" class="btn btn-primary" data-i18n="btn.novoProjeto">+ Novo Projeto</button>
   </header>
 
   <!-- ===== HERO ===== -->
   <section class="hero">
     <div class="hero-text">
-      <span class="eyebrow">Publicidade &amp; Identidade Visual</span>
-      <h1>Cartões de visita e artes publicitárias para <span class="hl">qualquer negócio</span></h1>
-      <p>Monte cartões de visita, posts, stories e flyers prontos para imprimir ou publicar — com templates
+      <span class="eyebrow" data-i18n="hero.eyebrow">Publicidade &amp; Identidade Visual</span>
+      <h1 data-i18n="hero.title">Cartões de visita e artes publicitárias para <span class="hl">qualquer negócio</span></h1>
+      <p data-i18n="hero.desc">Monte cartões de visita, posts, stories e flyers prontos para imprimir ou publicar — com templates
         desenhados para companhias aéreas, casamentos, restaurantes, imobiliárias, saúde, moda, eventos e muito mais.</p>
       <div class="hero-actions">
-        <button type="button" class="btn btn-primary btn-lg" data-nav data-section="categorias">Ver Segmentos</button>
-        <button type="button" class="btn btn-ghost btn-lg" data-nav data-section="editor">Abrir Editor</button>
+        <button type="button" class="btn btn-primary btn-lg" data-nav data-section="categorias" data-i18n="hero.verSegmentos">Ver Segmentos</button>
+        <button type="button" class="btn btn-ghost btn-lg" data-nav data-section="editor" data-i18n="hero.abrirEditor">Abrir Editor</button>
       </div>
       <div class="hero-stats">
-        <div><strong id="stat-templates">0</strong><span>modelos</span></div>
-        <div><strong id="stat-categories">0</strong><span>segmentos</span></div>
-        <div><strong id="stat-formats">0</strong><span>formatos</span></div>
+        <div><strong id="stat-templates">0</strong><span data-i18n="hero.stat.templates">modelos</span></div>
+        <div><strong id="stat-categories">0</strong><span data-i18n="hero.stat.categorias">segmentos</span></div>
+        <div><strong id="stat-formats">0</strong><span data-i18n="hero.stat.formatos">formatos</span></div>
       </div>
     </div>
     <div class="hero-preview" id="hero-preview" aria-hidden="true"></div>
@@ -49,8 +69,8 @@
   <!-- ===== CATEGORIES ===== -->
   <section id="categorias" class="section">
     <div class="section-head">
-      <h2>Escolha um segmento</h2>
-      <p>Cada segmento traz paleta, ícones e composição pensados para o setor. Clique para ir direto ao editor com um modelo sugerido.</p>
+      <h2 data-i18n="categorias.title">Escolha um segmento</h2>
+      <p data-i18n="categorias.desc">Cada segmento traz paleta, ícones e composição pensados para o setor. Clique para ir direto ao editor com um modelo sugerido.</p>
     </div>
     <div id="category-grid" class="category-grid"></div>
   </section>
@@ -58,8 +78,8 @@
   <!-- ===== EDITOR ===== -->
   <section id="editor" class="section editor-section">
     <div class="section-head">
-      <h2>Editor</h2>
-      <p>Personalize textos, cores, logotipo e formato. A pré-visualização atualiza em tempo real.</p>
+      <h2 data-i18n="editor.title">Editor</h2>
+      <p data-i18n="editor.desc">Personalize textos, cores, logotipo e formato. A pré-visualização atualiza em tempo real.</p>
     </div>
 
     <div class="editor-grid">
@@ -68,79 +88,81 @@
       <div class="editor-panel">
 
         <div class="panel-block">
-          <h3>Formato</h3>
+          <h3 data-i18n="editor.formato">Formato</h3>
           <div id="format-tabs" class="format-tabs"></div>
         </div>
 
         <div class="panel-block">
-          <h3>Modelo</h3>
+          <h3 data-i18n="editor.modelo">Modelo</h3>
           <div class="template-filter">
             <select id="template-category-filter"></select>
+            <input type="search" id="template-search" data-i18n-ph="editor.pesquisarPh" placeholder="Pesquisar modelo por nome..." />
           </div>
           <div id="template-picker" class="template-picker"></div>
+          <p id="template-empty" class="empty-note hidden" data-i18n="editor.semModelos" style="padding:12px 0;">Nenhum modelo encontrado.</p>
         </div>
 
         <div class="panel-block">
-          <h3>Conteúdo</h3>
+          <h3 data-i18n="editor.conteudo">Conteúdo</h3>
           <div class="field-grid">
-            <label>Nome
+            <label><span data-i18n="editor.nome">Nome</span>
               <input type="text" id="f-nome" maxlength="40" />
             </label>
-            <label>Cargo / Função
+            <label><span data-i18n="editor.cargo">Cargo / Função</span>
               <input type="text" id="f-cargo" maxlength="40" />
             </label>
-            <label>Empresa / Marca
+            <label><span data-i18n="editor.empresa">Empresa / Marca</span>
               <input type="text" id="f-empresa" maxlength="40" />
             </label>
-            <label class="span-2">Frase de efeito / Slogan
+            <label class="span-2"><span data-i18n="editor.slogan">Frase de efeito / Slogan</span>
               <input type="text" id="f-slogan" maxlength="70" />
             </label>
-            <label>Telefone
+            <label><span data-i18n="editor.telefone">Telefone</span>
               <input type="text" id="f-telefone" maxlength="30" />
             </label>
-            <label>E-mail
+            <label><span data-i18n="editor.email">E-mail</span>
               <input type="text" id="f-email" maxlength="50" />
             </label>
-            <label>Site
+            <label><span data-i18n="editor.site">Site</span>
               <input type="text" id="f-site" maxlength="40" />
             </label>
-            <label>Instagram / Rede social
+            <label><span data-i18n="editor.instagram">Instagram / Rede social</span>
               <input type="text" id="f-instagram" maxlength="30" />
             </label>
-            <label class="span-2">Endereço / Cidade
+            <label class="span-2"><span data-i18n="editor.endereco">Endereço / Cidade</span>
               <input type="text" id="f-endereco" maxlength="60" />
             </label>
           </div>
         </div>
 
         <div class="panel-block">
-          <h3>Logotipo</h3>
+          <h3 data-i18n="editor.logotipo">Logotipo</h3>
           <div class="logo-row">
             <input type="file" id="f-logo" accept="image/*" />
-            <button id="remove-logo" class="btn btn-ghost btn-sm" type="button">Remover</button>
+            <button id="remove-logo" class="btn btn-ghost btn-sm" type="button" data-i18n="editor.remover">Remover</button>
           </div>
-          <p class="hint">Sem logo? O ícone do segmento é usado automaticamente.</p>
+          <p class="hint" data-i18n="editor.semLogoHint">Sem logo? O ícone do segmento é usado automaticamente.</p>
         </div>
 
         <div class="panel-block">
-          <h3>Cores</h3>
+          <h3 data-i18n="editor.cores">Cores</h3>
           <div class="color-row">
-            <label>Primária <input type="color" id="f-color-primary" /></label>
-            <label>Secundária <input type="color" id="f-color-secondary" /></label>
-            <button id="reset-colors" class="btn btn-ghost btn-sm" type="button">Padrão do modelo</button>
+            <label><span data-i18n="editor.primaria">Primária</span> <input type="color" id="f-color-primary" /></label>
+            <label><span data-i18n="editor.secundaria">Secundária</span> <input type="color" id="f-color-secondary" /></label>
+            <button id="reset-colors" class="btn btn-ghost btn-sm" type="button" data-i18n="editor.padraoModelo">Padrão do modelo</button>
           </div>
         </div>
 
         <div class="panel-block actions-block">
-          <button id="save-project" class="btn btn-primary">Salvar Projeto</button>
-          <button id="download-png" class="btn btn-secondary">Baixar PNG</button>
-          <button id="print-board" class="btn btn-secondary">Imprimir</button>
-          <button id="share-board" class="btn btn-secondary" type="button">Partilhar</button>
+          <button id="save-project" class="btn btn-primary" data-i18n="editor.salvarProjeto">Salvar Projeto</button>
+          <button id="download-png" class="btn btn-secondary" data-i18n="editor.baixarPng">Baixar PNG</button>
+          <button id="print-board" class="btn btn-secondary" data-i18n="editor.imprimir">Imprimir</button>
+          <button id="share-board" class="btn btn-secondary" type="button" data-i18n="editor.partilhar">Partilhar</button>
         </div>
         <div class="panel-block" id="buy-print-block">
-          <h3>Impressos físicos</h3>
-          <p class="hint" style="margin-top:0;">Manda imprimir e entregar em casa (disponível para Cartão de Visita e Flyer A5).</p>
-          <button id="buy-print-btn" class="btn btn-primary" type="button">Comprar impressos</button>
+          <h3 data-i18n="editor.impressosFisicos">Impressos físicos</h3>
+          <p class="hint" data-i18n="editor.impressosHint" style="margin-top:0;">Manda imprimir e entregar em casa (disponível para Cartão de Visita e Flyer A5).</p>
+          <button id="buy-print-btn" class="btn btn-primary" type="button" data-i18n="editor.comprarImpressos">Comprar impressos</button>
         </div>
         <p id="editor-status" class="editor-status" role="status" aria-live="polite"></p>
       </div>
@@ -150,6 +172,7 @@
         <div class="preview-toolbar">
           <div id="side-tabs" class="side-tabs"></div>
           <span id="format-label" class="format-label"></span>
+          <button id="zoom-board" type="button" class="btn btn-ghost btn-sm" title="Ampliar pré-visualização" data-i18n="editor.ampliar">Ampliar</button>
         </div>
         <div class="preview-stage">
           <div id="art-board" class="art-board"></div>
@@ -165,40 +188,59 @@
   <!-- ===== PROJECTS ===== -->
   <section id="projetos" class="section">
     <div class="section-head">
-      <h2>Meus Projetos</h2>
-      <p>Salvos neste navegador. Edite, duplique ou exclua quando quiser.</p>
+      <h2 data-i18n="projetos.title">Meus Projetos</h2>
+      <p data-i18n="projetos.desc">Salvos neste navegador. Edite, duplique ou exclua quando quiser.</p>
     </div>
     <div id="projects-grid" class="projects-grid">
-      <p id="projects-empty" class="empty-note">Você ainda não salvou nenhum projeto. Personalize um cartão no editor e clique em "Salvar Projeto".</p>
+      <p id="projects-empty" class="empty-note" data-i18n="projetos.vazio">Você ainda não salvou nenhum projeto. Personalize um cartão no editor e clique em "Salvar Projeto".</p>
     </div>
   </section>
 
   <!-- ===== HOW IT WORKS ===== -->
   <section id="ajuda" class="section how-section">
     <div class="section-head">
-      <h2>Como funciona</h2>
+      <h2 data-i18n="ajuda.title">Como funciona</h2>
     </div>
     <ol class="steps">
-      <li><span class="step-num">1</span><div><strong>Escolha o segmento</strong><p>Aviação, casamentos, gastronomia, imóveis, beleza, tecnologia, saúde, eventos, moda, automotivo, educação ou corporativo.</p></div></li>
-      <li><span class="step-num">2</span><div><strong>Selecione o formato</strong><p>Cartão de visita (frente e verso), post para redes sociais, story ou flyer A5.</p></div></li>
-      <li><span class="step-num">3</span><div><strong>Personalize</strong><p>Textos, logotipo e cores — a arte é montada automaticamente respeitando o layout do modelo.</p></div></li>
-      <li><span class="step-num">4</span><div><strong>Exporte</strong><p>Baixe em PNG em alta resolução, imprima direto do navegador ou salve o projeto para editar depois.</p></div></li>
+      <li><span class="step-num">1</span><div><strong data-i18n="ajuda.passo1.titulo">Escolha o segmento</strong><p data-i18n="ajuda.passo1.desc">Aviação, casamentos, gastronomia, imóveis, beleza, tecnologia, saúde, eventos, moda, automotivo, educação ou corporativo.</p></div></li>
+      <li><span class="step-num">2</span><div><strong data-i18n="ajuda.passo2.titulo">Selecione o formato</strong><p data-i18n="ajuda.passo2.desc">Cartão de visita (frente e verso), post para redes sociais, story ou flyer A5.</p></div></li>
+      <li><span class="step-num">3</span><div><strong data-i18n="ajuda.passo3.titulo">Personalize</strong><p data-i18n="ajuda.passo3.desc">Textos, logotipo e cores — a arte é montada automaticamente respeitando o layout do modelo.</p></div></li>
+      <li><span class="step-num">4</span><div><strong data-i18n="ajuda.passo4.titulo">Exporte</strong><p data-i18n="ajuda.passo4.desc">Baixe em PNG em alta resolução, imprima direto do navegador ou salve o projeto para editar depois.</p></div></li>
     </ol>
   </section>
 
+  <!-- ===== TESTIMONIALS ===== -->
+  <section id="depoimentos" class="section">
+    <div class="section-head">
+      <h2 data-i18n="depoimentos.title">Depoimentos</h2>
+      <p data-i18n="depoimentos.desc">O que dizem os clientes que já usaram o UniAds Studio.</p>
+    </div>
+    <div id="testimonials-list" class="projects-grid">
+      <p class="empty-note">A carregar depoimentos...</p>
+    </div>
+  </section>
+
   <footer class="site-footer">
-    <span>UniAds Studio — parte do ecossistema Unisocial.</span>
+    <span data-i18n="footer.texto">UniAds Studio — parte do ecossistema Unisocial.</span>
   </footer>
+
+  <!-- ===== ZOOM PREVIEW ===== -->
+  <div id="zoom-modal" class="modal-overlay hidden" role="dialog" aria-modal="true">
+    <div class="zoom-box">
+      <button id="zoom-close" class="modal-close" type="button" aria-label="Fechar" data-i18n-aria="modal.fechar">&times;</button>
+      <div id="zoom-stage" class="zoom-stage"></div>
+    </div>
+  </div>
 
   <!-- ===== CHECKOUT MODAL ===== -->
   <div id="checkout-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="checkout-title">
     <div class="modal-box">
-      <button id="checkout-close" class="modal-close" type="button" aria-label="Fechar">&times;</button>
+      <button id="checkout-close" class="modal-close" type="button" aria-label="Fechar" data-i18n-aria="modal.fechar">&times;</button>
       <h2 id="checkout-title">Comprar cartões impressos</h2>
-      <p class="hint">Impressão e envio por um parceiro externo (Gelato). O pagamento é processado de forma segura pela Stripe.</p>
+      <p class="hint" data-i18n="checkout.hint">Impressão e envio por um parceiro externo (Gelato). O pagamento é processado de forma segura pela Stripe.</p>
 
       <form id="checkout-form">
-        <label>Quantidade
+        <label><span data-i18n="checkout.quantidade">Quantidade</span>
           <select id="co-quantity">
             <option value="100">100 unidades</option>
             <option value="250">250 unidades</option>
@@ -207,18 +249,18 @@
         </label>
 
         <div class="field-grid" style="margin-top:14px;">
-          <label>Nome <input type="text" id="co-first-name" required /></label>
-          <label>Apelido <input type="text" id="co-last-name" required /></label>
-          <label class="span-2">Morada <input type="text" id="co-address1" required /></label>
-          <label class="span-2">Complemento (opcional) <input type="text" id="co-address2" /></label>
-          <label>Cidade <input type="text" id="co-city" required /></label>
-          <label>Código Postal <input type="text" id="co-postcode" required /></label>
-          <label>País (código, ex: PT) <input type="text" id="co-country" maxlength="2" placeholder="PT" required /></label>
-          <label>Telefone (opcional) <input type="text" id="co-phone" /></label>
-          <label class="span-2">E-mail <input type="email" id="co-email" required /></label>
+          <label><span data-i18n="checkout.nome">Nome</span> <input type="text" id="co-first-name" required /></label>
+          <label><span data-i18n="checkout.apelido">Apelido</span> <input type="text" id="co-last-name" required /></label>
+          <label class="span-2"><span data-i18n="checkout.morada">Morada</span> <input type="text" id="co-address1" required /></label>
+          <label class="span-2"><span data-i18n="checkout.complemento">Complemento (opcional)</span> <input type="text" id="co-address2" /></label>
+          <label><span data-i18n="checkout.cidade">Cidade</span> <input type="text" id="co-city" required /></label>
+          <label><span data-i18n="checkout.codigoPostal">Código Postal</span> <input type="text" id="co-postcode" required /></label>
+          <label><span data-i18n="checkout.pais">País (código, ex: PT)</span> <input type="text" id="co-country" maxlength="2" placeholder="PT" required /></label>
+          <label><span data-i18n="checkout.telefone">Telefone (opcional)</span> <input type="text" id="co-phone" /></label>
+          <label class="span-2"><span data-i18n="checkout.email">E-mail</span> <input type="email" id="co-email" required /></label>
         </div>
 
-        <button type="submit" id="checkout-submit" class="btn btn-primary btn-lg" style="width:100%;margin-top:18px;">
+        <button type="submit" id="checkout-submit" class="btn btn-primary btn-lg" style="width:100%;margin-top:18px;" data-i18n="checkout.irPagamento">
           Ir para pagamento
         </button>
         <p id="checkout-status" class="editor-status" role="status" aria-live="polite"></p>
@@ -228,6 +270,7 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="assets/js/i18n.js"></script>
 <script src="assets/js/app.js"></script>
 </body>
 </html>

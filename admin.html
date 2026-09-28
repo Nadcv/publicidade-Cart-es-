@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
 <meta name="robots" content="noindex, nofollow" />
 <title>Admin — UniAds Studio</title>
+<script>try{document.documentElement.setAttribute("data-theme",localStorage.getItem("uniads_theme")==="light"?"light":"dark")}catch(e){}</script>
 <link rel="stylesheet" href="assets/css/style.css" />
 <style>
   .admin-table { width: 100%; border-collapse: collapse; font-size: .82rem; }
@@ -17,6 +18,10 @@
   .status-sent_to_print { background: #1e2f3a; color: #4ab0e0; }
   .status-failed { background: #3a1e1e; color: #e05a5a; }
   .status-canceled { background: #2a2a2a; color: #999; }
+  .stat-row { display: flex; gap: 14px; flex-wrap: wrap; margin: 18px 0; }
+  .stat-tile { flex: 1; min-width: 160px; background: var(--bg-1); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; }
+  .stat-tile strong { display: block; font-size: 1.5rem; font-weight: 800; }
+  .stat-tile span { color: var(--text-soft); font-size: .78rem; }
 </style>
 </head>
 <body>
@@ -30,7 +35,7 @@
     </div>
   </header>
 
-  <section class="section" style="max-width:1100px;">
+  <section class="section is-active" style="max-width:1100px;">
     <div class="section-head">
       <h2>Painel de Administração</h2>
       <p>Todas as encomendas de cartões e flyers impressos.</p>
@@ -46,6 +51,7 @@
     <p id="admin-status" class="editor-status" role="status" aria-live="polite"></p>
 
     <div id="orders-wrap" style="display:none;">
+      <div id="stat-row" class="stat-row"></div>
       <div class="admin-table-wrap">
         <table class="admin-table">
           <thead>
@@ -62,6 +68,39 @@
         <span id="page-label" style="align-self:center;color:var(--text-soft);font-size:.8rem;"></span>
         <button type="button" id="next-page" class="btn btn-ghost btn-sm">Seguinte &rarr;</button>
       </div>
+
+      <div class="section-head" style="margin-top:36px;">
+        <h2>Depoimentos</h2>
+        <p>Adicione manualmente depoimentos reais de clientes. Aparecem já aprovados na página inicial.</p>
+      </div>
+      <div id="testimonial-form" class="editor-panel" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+        <label style="flex:1;min-width:160px;display:flex;flex-direction:column;gap:5px;font-size:.8rem;color:var(--text-soft);">
+          Nome
+          <input type="text" id="ti-author" maxlength="80" />
+        </label>
+        <label style="flex:1;min-width:160px;display:flex;flex-direction:column;gap:5px;font-size:.8rem;color:var(--text-soft);">
+          Empresa (opcional)
+          <input type="text" id="ti-company" maxlength="80" />
+        </label>
+        <label style="flex:1;min-width:100px;display:flex;flex-direction:column;gap:5px;font-size:.8rem;color:var(--text-soft);">
+          Nota (1-5)
+          <select id="ti-rating">
+            <option value="">—</option>
+            <option value="5">5</option>
+            <option value="4">4</option>
+            <option value="3">3</option>
+            <option value="2">2</option>
+            <option value="1">1</option>
+          </select>
+        </label>
+        <label style="flex:3;min-width:260px;display:flex;flex-direction:column;gap:5px;font-size:.8rem;color:var(--text-soft);">
+          Depoimento
+          <textarea id="ti-quote" maxlength="500" rows="2"></textarea>
+        </label>
+        <button type="button" id="ti-add-btn" class="btn btn-primary">Adicionar</button>
+      </div>
+      <p id="ti-status" class="editor-status" role="status" aria-live="polite"></p>
+      <div id="ti-list" class="projects-grid" style="margin-top:14px;"></div>
     </div>
   </section>
 
@@ -124,6 +163,16 @@
     }).join("");
   }
 
+  function renderSummary(summary) {
+    var cur = (summary.currency || "eur").toUpperCase();
+    function money(cents) { return (cents / 100).toLocaleString("pt-PT", { style: "currency", currency: cur }); }
+    document.getElementById("stat-row").innerHTML =
+      '<div class="stat-tile"><strong>' + money(summary.revenueCentsMonth) + "</strong><span>Faturado este mês</span></div>" +
+      '<div class="stat-tile"><strong>' + money(summary.revenueCentsTotal) + "</strong><span>Faturado no total</span></div>" +
+      '<div class="stat-tile"><strong>' + summary.pendingCount + "</strong><span>A aguardar pagamento</span></div>" +
+      '<div class="stat-tile"><strong>' + summary.totalOrders + "</strong><span>Encomendas (últimas 2000)</span></div>";
+  }
+
   function loadOrders() {
     var pw = getPassword();
     statusEl.textContent = "A carregar...";
@@ -136,9 +185,11 @@
         ordersWrap.style.display = "block";
         state.total = result.data.total;
         state.pageSize = result.data.pageSize;
+        renderSummary(result.data.summary);
         renderOrders(result.data.orders);
         var pages = Math.max(1, Math.ceil(state.total / state.pageSize));
         pageLabel.textContent = "Página " + state.page + " de " + pages + " (" + state.total + " encomendas)";
+        loadTestimonials();
       })
       .catch(function (err) {
         statusEl.textContent = err.message || "Não foi possível entrar.";
@@ -146,6 +197,78 @@
         loginBox.style.display = "flex";
       });
   }
+
+  var tiList = document.getElementById("ti-list");
+  var tiStatus = document.getElementById("ti-status");
+
+  function renderTestimonialsAdmin(items) {
+    if (!items.length) {
+      tiList.innerHTML = '<p class="empty-note">Ainda sem depoimentos.</p>';
+      return;
+    }
+    tiList.innerHTML = items.map(function (t) {
+      var stars = t.rating ? "★".repeat(t.rating) + "☆".repeat(5 - t.rating) : "";
+      return (
+        '<div class="testimonial-card">' +
+        (stars ? '<span class="testimonial-stars">' + stars + "</span>" : "") +
+        '<p class="testimonial-quote">"' + escapeHtml(t.quote) + '"</p>' +
+        '<p class="testimonial-author"><strong>' + escapeHtml(t.author_name) + "</strong>" +
+        (t.company ? " · " + escapeHtml(t.company) : "") + "</p>" +
+        '<button type="button" class="btn btn-ghost btn-sm" data-del="' + t.id + '">Excluir</button>' +
+        "</div>"
+      );
+    }).join("");
+    tiList.querySelectorAll("[data-del]").forEach(function (btn) {
+      btn.addEventListener("click", function () { deleteTestimonial(btn.getAttribute("data-del")); });
+    });
+  }
+
+  function loadTestimonials() {
+    fetch("/api/admin/testimonials", { headers: { "X-Admin-Password": getPassword() } })
+      .then(function (r) { return r.json(); })
+      .then(function (data) { renderTestimonialsAdmin(data.testimonials || []); })
+      .catch(function () { tiList.innerHTML = '<p class="empty-note">Não foi possível carregar.</p>'; });
+  }
+
+  function addTestimonial() {
+    var authorName = document.getElementById("ti-author").value.trim();
+    var quote = document.getElementById("ti-quote").value.trim();
+    var company = document.getElementById("ti-company").value.trim();
+    var rating = document.getElementById("ti-rating").value;
+    if (!authorName || !quote) {
+      tiStatus.textContent = "Preencha nome e depoimento.";
+      return;
+    }
+    tiStatus.textContent = "A adicionar...";
+    fetch("/api/admin/testimonials", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Admin-Password": getPassword() },
+      body: JSON.stringify({ authorName: authorName, quote: quote, company: company, rating: rating })
+    })
+      .then(function (r) { return r.json().then(function (data) { return { ok: r.ok, data: data }; }); })
+      .then(function (result) {
+        if (!result.ok) throw new Error(result.data.error || "Falha ao adicionar.");
+        tiStatus.textContent = "";
+        document.getElementById("ti-author").value = "";
+        document.getElementById("ti-company").value = "";
+        document.getElementById("ti-quote").value = "";
+        document.getElementById("ti-rating").value = "";
+        loadTestimonials();
+      })
+      .catch(function (err) { tiStatus.textContent = err.message || "Não foi possível adicionar."; });
+  }
+
+  function deleteTestimonial(id) {
+    if (!window.confirm("Excluir este depoimento?")) return;
+    fetch("/api/admin/testimonials?id=" + encodeURIComponent(id), {
+      method: "DELETE",
+      headers: { "X-Admin-Password": getPassword() }
+    })
+      .then(function (r) { return r.json(); })
+      .then(function () { loadTestimonials(); });
+  }
+
+  document.getElementById("ti-add-btn").addEventListener("click", addTestimonial);
 
   document.getElementById("login-btn").addEventListener("click", function () {
     setPassword(document.getElementById("admin-password").value);

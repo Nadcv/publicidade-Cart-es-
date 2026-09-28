@@ -191,7 +191,7 @@
   var FIELD_KEYS = ["nome", "cargo", "empresa", "slogan", "telefone", "email", "site", "instagram", "endereco"];
 
   // Secções principais alternadas por botão (visual "uma de cada vez", em vez de scroll longo).
-  var SECTION_IDS = ["categorias", "editor", "projetos", "ajuda"];
+  var SECTION_IDS = ["categorias", "editor", "projetos", "ajuda", "depoimentos"];
 
   function showSection(id, skipScroll) {
     if (SECTION_IDS.indexOf(id) === -1) return;
@@ -301,13 +301,22 @@
     );
     sel.innerHTML = opts.join("");
     sel.value = getTemplate(state.templateId).category;
-    sel.addEventListener("change", function () { renderTemplatePicker(sel.value); });
+    sel.addEventListener("change", function () { renderTemplatePicker(); });
+    $("#template-search").addEventListener("input", function () { renderTemplatePicker(); });
   }
 
   function renderTemplatePicker(filterCat) {
     filterCat = filterCat || $("#template-category-filter").value || "all";
+    var search = $("#template-search").value.trim().toLowerCase();
     var list = templatesByCategory(filterCat);
+    if (search) {
+      list = list.filter(function (tpl) {
+        return tpl.name.toLowerCase().indexOf(search) !== -1 ||
+          getCategory(tpl.category).name.toLowerCase().indexOf(search) !== -1;
+      });
+    }
     var picker = $("#template-picker");
+    $("#template-empty").classList.toggle("hidden", list.length > 0);
     picker.innerHTML = list.map(function (tpl) {
       var cat = getCategory(tpl.category);
       var active = tpl.id === state.templateId ? " active" : "";
@@ -512,6 +521,7 @@
     state.currentProjectId = null;
     state.logo = null;
     $("#f-logo").value = "";
+    $("#template-search").value = "";
     $("#template-category-filter").value = catId;
     renderTemplatePicker(catId);
     state.fields = Object.assign({}, getCategory(catId).defaults);
@@ -657,6 +667,47 @@
   }
 
   /* ---------------------------------------------------------
+     Depoimentos
+     --------------------------------------------------------- */
+  function starsHtml(rating) {
+    var n = Math.max(0, Math.min(5, parseInt(rating, 10) || 0));
+    if (!n) return "";
+    var out = "";
+    for (var i = 0; i < 5; i++) out += i < n ? "★" : "☆";
+    return '<span class="testimonial-stars" aria-hidden="true">' + out + "</span>";
+  }
+
+  function renderTestimonials() {
+    var list = $("#testimonials-list");
+    if (!list) return;
+    fetch("/api/testimonials")
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        var items = (data && data.testimonials) || [];
+        if (!items.length) {
+          list.innerHTML = '<p id="testimonials-empty" class="empty-note">Ainda sem depoimentos publicados.</p>';
+          return;
+        }
+        list.innerHTML = items
+          .map(function (t) {
+            return (
+              '<div class="testimonial-card">' +
+              starsHtml(t.rating) +
+              '<p class="testimonial-quote">"' + escapeHtml(t.quote) + '"</p>' +
+              '<p class="testimonial-author"><strong>' + escapeHtml(t.author_name) + "</strong>" +
+              (t.company ? " · " + escapeHtml(t.company) : "") +
+              "</p>" +
+              "</div>"
+            );
+          })
+          .join("");
+      })
+      .catch(function () {
+        list.innerHTML = '<p class="empty-note">Não foi possível carregar os depoimentos agora.</p>';
+      });
+  }
+
+  /* ---------------------------------------------------------
      Exportação
      --------------------------------------------------------- */
   function flashStatus(msg) {
@@ -724,6 +775,35 @@
       flashStatus("Falha ao gerar a imagem. Tente novamente.");
     });
   }
+
+  var THEME_KEY = "uniads_theme";
+  function themeLabel(theme) {
+    var key = theme === "light" ? "theme.dark" : "theme.light";
+    return window.UniI18n ? window.UniI18n.t(key) : (theme === "light" ? "Modo escuro" : "Modo claro");
+  }
+  function applyTheme(theme) {
+    document.documentElement.setAttribute("data-theme", theme);
+    var btn = $("#theme-toggle");
+    if (btn) btn.textContent = themeLabel(theme);
+    try { localStorage.setItem(THEME_KEY, theme); } catch (e) { /* sem localStorage, não persiste */ }
+  }
+  function toggleTheme() {
+    var current = document.documentElement.getAttribute("data-theme") === "light" ? "light" : "dark";
+    applyTheme(current === "light" ? "dark" : "light");
+  }
+  function initTheme() {
+    var saved = null;
+    try { saved = localStorage.getItem(THEME_KEY); } catch (e) { /* ignora */ }
+    applyTheme(saved === "light" ? "light" : "dark");
+  }
+
+  function openZoom() {
+    var stage = $("#zoom-stage");
+    stage.innerHTML = '<div class="art-board"></div>';
+    renderBoard(stage.querySelector(".art-board"));
+    $("#zoom-modal").classList.remove("hidden");
+  }
+  function closeZoom() { $("#zoom-modal").classList.add("hidden"); }
 
   function printBoard() {
     var existing = document.getElementById("print-target");
@@ -878,6 +958,7 @@
 
     loadProjects();
     renderProjects();
+    renderTestimonials();
 
     $("#save-project").addEventListener("click", saveCurrentProject);
     $("#download-png").addEventListener("click", downloadPNG);
@@ -888,6 +969,17 @@
       else shareBtn.style.display = "none";
     }
     $("#new-project-btn").addEventListener("click", newProject);
+
+    initTheme();
+    $("#theme-toggle").addEventListener("click", toggleTheme);
+    document.addEventListener("uniads:langchange", function () {
+      var btn = $("#theme-toggle");
+      if (btn) btn.textContent = themeLabel(document.documentElement.getAttribute("data-theme") === "light" ? "light" : "dark");
+    });
+
+    $("#zoom-board").addEventListener("click", openZoom);
+    $("#zoom-close").addEventListener("click", closeZoom);
+    $("#zoom-modal").addEventListener("click", function (e) { if (e.target.id === "zoom-modal") closeZoom(); });
 
     $("#buy-print-btn").addEventListener("click", openCheckoutModal);
     $("#checkout-close").addEventListener("click", closeCheckoutModal);
