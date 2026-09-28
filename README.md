@@ -32,13 +32,17 @@ Abra `http://localhost:8080`. Não precisa de `npm install`: é HTML/CSS/JS puro
 ## Arquitetura
 
 ```
-index.html              Estrutura da página (hero, categorias, editor, projetos, checkout)
-style.css               Tema da aplicação + sistema de "art board" (cartão/anúncio) themeable
-                        via CSS custom properties (--tpl-primary, --tpl-bg, --tpl-icon, ...)
-app.js                  CATEGORIES / TEMPLATES / FORMATS (dados) + estado do editor +
-                        renderização do board + projetos (localStorage) + exportação + checkout
-pedido-confirmado.html  Página de retorno do Stripe Checkout (consulta /api/order-status)
-api/
+index.html                Estrutura da página (hero, categorias, editor, projetos, checkout)
+pedido-confirmado.html    Página de retorno do Stripe Checkout (consulta /api/order-status)
+
+assets/
+  css/style.css           Tema da aplicação + sistema de "art board" (cartão/anúncio) themeable
+                          via CSS custom properties (--tpl-primary, --tpl-bg, --tpl-icon, ...)
+  js/app.js               CATEGORIES / TEMPLATES / FORMATS (dados) + estado do editor +
+                          renderização do board + projetos (localStorage) + exportação + checkout
+
+api/                      Funções serverless (tem de ficar na raiz — é a pasta que a Vercel
+                          deteta automaticamente para isto, não pode ser movida)
   create-checkout-session.js  Recebe o design, grava a encomenda (com a imagem em base64), cria a
                               Stripe Checkout Session
   stripe-webhook.js           Confirma o pagamento e cria a encomenda na Gelato
@@ -46,7 +50,8 @@ api/
   order-image.js              Serve a arte de impressão de uma encomenda (lida da base de dados) —
                               é esta URL que é passada à Gelato para descarregar o ficheiro
   lib/{supabase,gelato,price}.js   Helpers dos três serviços externos
-supabase/schema.sql     Tabela `orders` (ver secção de monetização abaixo)
+
+supabase/schema.sql       Tabela `orders` (ver secção de monetização abaixo)
 ```
 
 Cada modelo combina um `layout` (`split` | `topbar` | `diagonal` | `frame` | `centered`) com
