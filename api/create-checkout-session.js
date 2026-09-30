@@ -4,6 +4,35 @@ var { priceForQuantity, getAllowedQuantities } = require("./lib/price");
 
 var REQUIRED_SHIPPING_FIELDS = ["firstName", "lastName", "addressLine1", "city", "postCode", "country", "email"];
 var ALLOWED_FORMATS = ["card", "flyer"];
+var MAX_ITEMS = 10;
+
+function validateItem(raw, index) {
+  var templateId = String((raw && raw.templateId) || "").slice(0, 60);
+  var format = ALLOWED_FORMATS.indexOf(raw && raw.format) !== -1 ? raw.format : "card";
+  var quantity = parseInt(raw && raw.quantity, 10);
+  var fields = raw && raw.fields && typeof raw.fields === "object" ? raw.fields : {};
+  var imageBase64 = raw && raw.imageBase64;
+
+  if (!templateId) throw new Error("Item " + (index + 1) + ": templateId em falta.");
+
+  var amountCents = priceForQuantity(format, quantity);
+  if (amountCents === null) {
+    throw new Error(
+      "Item " + (index + 1) + ": quantidade inválida. Opções: " + getAllowedQuantities(format).join(", ") + "."
+    );
+  }
+
+  if (!imageBase64 || typeof imageBase64 !== "string" || !imageBase64.startsWith("data:image/")) {
+    throw new Error("Item " + (index + 1) + ": imagem do cartão em falta ou inválida.");
+  }
+  var base64Data = imageBase64.split(",")[1];
+  var buffer = Buffer.from(base64Data, "base64");
+  if (buffer.length > 8 * 1024 * 1024) {
+    throw new Error("Item " + (index + 1) + ": imagem demasiado grande (máx. 8MB).");
+  }
+
+  return { templateId: templateId, format: format, quantity: quantity, fields: fields, base64Data: base64Data, amountCents: amountCents };
+}
 
 module.exports = async function handler(req, res) {
   if (req.method !== "POST") {
@@ -13,21 +42,23 @@ module.exports = async function handler(req, res) {
 
   try {
     var body = req.body || {};
-    var templateId = String(body.templateId || "").slice(0, 60);
-    var format = ALLOWED_FORMATS.indexOf(body.format) !== -1 ? body.format : "card";
-    var quantity = parseInt(body.quantity, 10);
-    var fields = body.fields && typeof body.fields === "object" ? body.fields : {};
+    var rawItems = Array.isArray(body.items) ? body.items : [];
     var shipping = body.shipping && typeof body.shipping === "object" ? body.shipping : {};
-    var imageBase64 = body.imageBase64;
 
-    if (!templateId) {
-      res.status(400).json({ error: "templateId em falta." });
+    if (!rawItems.length) {
+      res.status(400).json({ error: "Carrinho vazio." });
+      return;
+    }
+    if (rawItems.length > MAX_ITEMS) {
+      res.status(400).json({ error: "Máximo de " + MAX_ITEMS + " itens por pedido." });
       return;
     }
 
-    var amountCents = priceForQuantity(format, quantity);
-    if (amountCents === null) {
-      res.status(400).json({ error: "Quantidade inválida. Opções: " + getAllowedQuantities(format).join(", ") + "." });
+    var items;
+    try {
+      items = rawItems.map(validateItem);
+    } catch (validationErr) {
+      res.status(400).json({ error: validationErr.message });
       return;
     }
 
@@ -39,37 +70,28 @@ module.exports = async function handler(req, res) {
       }
     }
 
-    if (!imageBase64 || typeof imageBase64 !== "string" || !imageBase64.startsWith("data:image/")) {
-      res.status(400).json({ error: "Imagem do cartão em falta ou inválida." });
-      return;
-    }
-
-    var base64Data = imageBase64.split(",")[1];
-    var buffer = Buffer.from(base64Data, "base64");
-    if (buffer.length > 8 * 1024 * 1024) {
-      res.status(400).json({ error: "Imagem demasiado grande (máx. 8MB)." });
-      return;
-    }
-
     var currency = (process.env.CURRENCY || "eur").toLowerCase();
+    var totalCents = items.reduce(function (sum, it) { return sum + it.amountCents; }, 0);
     var supabase = getSupabaseAdmin();
     var siteUrl = process.env.PUBLIC_SITE_URL || ("https://" + req.headers.host);
+    var first = items[0];
 
-    // 1. Cria a encomenda já com a imagem guardada na própria base de dados
-    //    (evita depender de um bucket de Storage à parte).
+    // 1. Cria o pedido "pai" (encomenda). Os campos template_id/product_format/quantity/
+    //    image_data espelham o primeiro item, por compatibilidade com código que só lê orders.
     var insertResult = await supabase
       .from("orders")
       .insert({
         status: "pending_payment",
-        template_id: templateId,
-        product_format: format,
-        quantity: quantity,
-        fields: fields,
-        image_data: base64Data,
+        template_id: first.templateId,
+        product_format: first.format,
+        quantity: first.quantity,
+        fields: first.fields,
+        image_data: first.base64Data,
+        item_count: items.length,
         shipping_name: shipping.firstName + " " + shipping.lastName,
         shipping_address: shipping,
         contact_email: shipping.email,
-        amount_cents: amountCents,
+        amount_cents: totalCents,
         currency: currency
       })
       .select()
@@ -78,30 +100,56 @@ module.exports = async function handler(req, res) {
     if (insertResult.error) throw insertResult.error;
     var order = insertResult.data;
 
-    // 2. A URL pública da imagem é o nosso próprio endpoint, que lê o image_data da BD.
+    // 2. A URL pública da imagem do item principal é o nosso próprio endpoint.
     var imageUrl = siteUrl + "/api/order-image?id=" + order.id;
     await supabase.from("orders").update({ image_url: imageUrl }).eq("id", order.id);
 
-    // 3. Cria a sessão de pagamento Stripe.
-    var productName = (format === "flyer" ? "Flyers A5 impressos" : "Cartões de visita impressos") +
-      " (" + quantity + " un.) — " + templateId;
+    // 3. Cria uma linha em order_items por item do carrinho (incluindo o primeiro, para
+    //    que order_items seja sempre a lista completa e autoritativa dos itens).
+    var itemRows = items.map(function (it) {
+      return {
+        order_id: order.id,
+        template_id: it.templateId,
+        product_format: it.format,
+        quantity: it.quantity,
+        fields: it.fields,
+        image_data: it.base64Data,
+        amount_cents: it.amountCents
+      };
+    });
+    var itemsInsertResult = await supabase.from("order_items").insert(itemRows).select();
+    if (itemsInsertResult.error) throw itemsInsertResult.error;
+
+    var itemUrlUpdates = itemsInsertResult.data.map(function (row) {
+      return supabase
+        .from("order_items")
+        .update({ image_url: siteUrl + "/api/order-image?item=" + row.id })
+        .eq("id", row.id);
+    });
+    await Promise.all(itemUrlUpdates);
+
+    // 4. Cria a sessão de pagamento Stripe, um line_item por item do carrinho.
+    var lineItems = items.map(function (it) {
+      var productName = (it.format === "flyer" ? "Flyers A5 impressos" : "Cartões de visita impressos") +
+        " (" + it.quantity + " un.) — " + it.templateId;
+      return {
+        quantity: 1,
+        price_data: {
+          currency: currency,
+          unit_amount: it.amountCents,
+          product_data: {
+            name: productName,
+            description: (it.fields.empresa || it.fields.nome || "UniAds Studio")
+          }
+        }
+      };
+    });
+
     var stripe = Stripe(process.env.STRIPE_SECRET_KEY);
     var session = await stripe.checkout.sessions.create({
       mode: "payment",
       allow_promotion_codes: true,
-      line_items: [
-        {
-          quantity: 1,
-          price_data: {
-            currency: currency,
-            unit_amount: amountCents,
-            product_data: {
-              name: productName,
-              description: (fields.empresa || fields.nome || "UniAds Studio")
-            }
-          }
-        }
-      ],
+      line_items: lineItems,
       customer_email: shipping.email,
       metadata: { order_id: order.id },
       success_url: siteUrl + "/pedido-confirmado.html?session_id={CHECKOUT_SESSION_ID}",
@@ -117,4 +165,4 @@ module.exports = async function handler(req, res) {
   }
 };
 
-module.exports.config = { api: { bodyParser: { sizeLimit: "10mb" } } };
+module.exports.config = { api: { bodyParser: { sizeLimit: "40mb" } } };

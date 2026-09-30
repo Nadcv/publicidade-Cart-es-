@@ -16,7 +16,7 @@ module.exports = async function handler(req, res) {
     var supabase = getSupabaseAdmin();
     var result = await supabase
       .from("orders")
-      .select("status, quantity, template_id, amount_cents, currency, created_at")
+      .select("status, quantity, item_count, template_id, amount_cents, currency, referral_code, created_at")
       .eq("stripe_session_id", sessionId)
       .single();
 

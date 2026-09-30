@@ -61,10 +61,17 @@
         }
         var label = STATUS_LABEL[data.status] || data.status;
         var price = (data.amount_cents / 100).toLocaleString("pt-PT", { style: "currency", currency: (data.currency || "eur").toUpperCase() });
+        var itemsNote = data.item_count > 1 ? " (" + data.item_count + " itens)" : "";
+        var referralHtml = data.referral_code
+          ? '<div style="margin:16px 0;padding:12px;border:1px dashed var(--accent-2);border-radius:8px;">' +
+            '<p style="margin:0 0 4px;font-size:.78rem;color:var(--text-soft);">O teu código para partilhares com amigos:</p>' +
+            '<p style="margin:0;font-size:1.1rem;font-weight:700;letter-spacing:.04em;">' + data.referral_code + "</p></div>"
+          : "";
         box.innerHTML =
           "<h2>Obrigado pelo teu pedido!</h2>" +
           "<p>" + label + "</p>" +
-          "<p style=\"color:var(--text-soft);font-size:.85rem;\">" + data.quantity + " cartões · " + price + "</p>";
+          "<p style=\"color:var(--text-soft);font-size:.85rem;\">" + data.quantity + " cartões" + itemsNote + " · " + price + "</p>" +
+          referralHtml;
         if (data.status === "pending_payment" || data.status === "paid") {
           window.setTimeout(poll, 3000);
         }

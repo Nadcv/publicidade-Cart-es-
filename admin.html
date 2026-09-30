@@ -56,7 +56,7 @@
         <table class="admin-table">
           <thead>
             <tr>
-              <th>Data</th><th>Estado</th><th>Formato</th><th>Qtd</th><th>Total</th>
+              <th>Data</th><th>Estado</th><th>Formato</th><th>Qtd</th><th>Itens</th><th>Total</th>
               <th>Cliente</th><th>E-mail</th><th>Cidade/País</th><th>Ref.</th>
             </tr>
           </thead>
@@ -153,6 +153,7 @@
         '<td><span class="status-pill status-' + o.status + '">' + (STATUS_LABEL[o.status] || o.status) + "</span></td>" +
         "<td>" + (FORMAT_LABEL[o.product_format] || o.product_format) + "</td>" +
         "<td>" + o.quantity + "</td>" +
+        "<td>" + (o.item_count || 1) + "</td>" +
         "<td>" + price + "</td>" +
         "<td>" + escapeHtml(o.shipping_name) + "</td>" +
         "<td>" + escapeHtml(o.contact_email) + "</td>" +

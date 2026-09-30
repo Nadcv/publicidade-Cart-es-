@@ -73,12 +73,17 @@
       var date = new Date(o.created_at).toLocaleDateString("pt-PT");
       var status = STATUS_LABEL[o.status] || o.status;
       var format = FORMAT_LABEL[o.product_format] || o.product_format;
+      var itemsNote = o.item_count > 1 ? " (+" + (o.item_count - 1) + " itens)" : "";
+      var referralNote = o.referral_code
+        ? '<span style="font-size:.72rem;">Código para amigos: <strong>' + escapeHtml(o.referral_code) + "</strong></span>"
+        : "";
       return (
         '<div class="project-card">' +
         '<div class="project-info">' +
-        "<strong>" + escapeHtml(format) + " · " + o.quantity + " un.</strong>" +
+        "<strong>" + escapeHtml(format) + " · " + o.quantity + " un." + itemsNote + "</strong>" +
         "<span>" + escapeHtml(status) + "</span>" +
         "<span>" + price + " · " + date + "</span>" +
+        referralNote +
         '<span style="font-size:.68rem;opacity:.7;">Ref: ' + escapeHtml(o.id) + "</span>" +
         "</div></div>"
       );

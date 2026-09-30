@@ -26,7 +26,9 @@
     mail: '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 6 10-6"/>',
     globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18 14 14 0 0 1 0-18z"/>',
     instagram: '<rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.3" cy="6.7" r="1.1" fill="currentColor" stroke="none"/>',
-    pin: '<path d="M12 22s7-7.2 7-12a7 7 0 1 0-14 0c0 4.8 7 12 7 12z"/><circle cx="12" cy="10" r="2.4"/>'
+    pin: '<path d="M12 22s7-7.2 7-12a7 7 0 1 0-14 0c0 4.8 7 12 7 12z"/><circle cx="12" cy="10" r="2.4"/>',
+    paw: '<circle cx="7" cy="9" r="2"/><circle cx="12" cy="6.5" r="2"/><circle cx="17" cy="9" r="2"/><path d="M8.5 14.5c0-2 1.6-3.2 3.5-3.2s3.5 1.2 3.5 3.2c0 2.3-1.8 3.8-3.5 3.8s-3.5-1.5-3.5-3.8z"/>',
+    dumbbell: '<path d="M6.5 7v10M17.5 7v10"/><rect x="3" y="9" width="3" height="6" rx="1"/><rect x="18" y="9" width="3" height="6" rx="1"/><path d="M6.5 12h11"/>'
   };
 
   function iconSVG(name, cls) {
@@ -109,7 +111,19 @@
       description: "Escritórios de advocacia, consultorias e empresas corporativas.",
       defaults: { nome: "Dr. Marcelo Teixeira", cargo: "Advogado Sócio", empresa: "Teixeira & Associados",
         slogan: "Excelência jurídica a seu favor.", telefone: "(11) 3055-9900", email: "contato@teixeiraassociados.adv.br",
-        site: "www.teixeiraassociados.adv.br", instagram: "@teixeiraassociados", endereco: "São Paulo - SP" } }
+        site: "www.teixeiraassociados.adv.br", instagram: "@teixeiraassociados", endereco: "São Paulo - SP" } },
+
+    { id: "petcare", name: "Pet Shops & Veterinária", icon: "paw", color: "#e07b3f",
+      description: "Clínicas veterinárias, pet shops e banho & tosa com visual amigável.",
+      defaults: { nome: "Dra. Sofia Almeida", cargo: "Médica Veterinária", empresa: "Clínica Patas Felizes",
+        slogan: "Cuidado de quem também é família.", telefone: "(71) 99234-5678", email: "contato@patasfelizes.vet.br",
+        site: "www.patasfelizes.vet.br", instagram: "@patasfelizesvet", endereco: "Salvador - BA" } },
+
+    { id: "fitness", name: "Fitness & Academias", icon: "dumbbell", color: "#d9432e",
+      description: "Academias, personal trainers e estúdios de treino com energia e força.",
+      defaults: { nome: "Diego Martins", cargo: "Personal Trainer", empresa: "Força Total Studio",
+        slogan: "Supera o teu limite, todos os dias.", telefone: "(41) 99876-1234", email: "contato@forcatotal.com",
+        site: "www.forcatotal.com", instagram: "@forcatotalstudio", endereco: "Curitiba - PR" } }
   ];
 
   /* ---------------------------------------------------------
@@ -178,7 +192,18 @@
     { id: "corporativo-1", name: "Clássico Executivo", category: "corporativo", icon: "briefcase", layout: "topbar", pattern: "none",
       colors: { primary: "#1c2b45", secondary: "#a8b3c4", bg: "#ffffff", bgBack: "#ffffff", text: "#101826", textSoft: "#5b6b83" } },
     { id: "corporativo-2", name: "Prestígio", category: "corporativo", icon: "briefcase", layout: "frame", pattern: "none",
-      colors: { primary: "#2b2b2b", secondary: "#b48a3f", bg: "#ffffff", bgBack: "#ffffff", text: "#1a1a1a", textSoft: "#6b6b6b" } }
+      colors: { primary: "#2b2b2b", secondary: "#b48a3f", bg: "#ffffff", bgBack: "#ffffff", text: "#1a1a1a", textSoft: "#6b6b6b" } },
+
+    { id: "petcare-1", name: "Patinhas Alegres", category: "petcare", icon: "paw", layout: "centered", pattern: "dots",
+      colors: { primary: "#e07b3f", secondary: "#2f8f5b", bg: "#fff6ee", bgBack: "#fff6ee", text: "#3a2416", textSoft: "#8a6a4c" } },
+    { id: "petcare-2", name: "Clínica Vet Clean", category: "petcare", icon: "paw", layout: "topbar", pattern: "none",
+      colors: { primary: "#2f8f5b", secondary: "#d8e6dc", bg: "#ffffff", bgBack: "#ffffff", text: "#101c15", textSoft: "#5c6b62" } },
+
+    { id: "fitness-1", name: "Força Urbana", category: "fitness", icon: "dumbbell", layout: "split", pattern: "diagonal",
+      colors: { primary: "#111111", secondary: "#d9432e", bg: "#111111", bgBack: "#111111", text: "#f2f2f2", textSoft: "#a3a3a3", iconAccent: "#d9432e" } },
+    { id: "fitness-2", name: "Studio Energy", category: "fitness", icon: "dumbbell", layout: "diagonal", pattern: "grid",
+      colors: { primary: "#d9432e", secondary: "#2b2b2b", bg: "#ffffff", bgBack: "#1a1010", text: "#1a1010", textSoft: "#6b6b6b",
+        textBack: "#f5ece9", textSoftBack: "#c9a79f", iconAccentBack: "#d9432e" } }
   ];
 
   var FORMATS = [
@@ -223,8 +248,10 @@
     fields: Object.assign({}, CATEGORIES[0].defaults),
     colorOverride: { primary: "", secondary: "" },
     logo: null,
+    includeQr: true,
     currentProjectId: null,
-    projects: []
+    projects: [],
+    cart: []
   };
 
   /* ---------------------------------------------------------
@@ -452,7 +479,74 @@
       '<div class="cb-header">' + logoOrIcon(tpl, colors, 22) + "<strong>" + escapeHtml(f.empresa || "Empresa") + "</strong></div>" +
       (f.slogan ? '<div class="cb-slogan">"' + escapeHtml(f.slogan) + '"</div>' : "") +
       rows +
-      "</div><div class=\"cb-bar\"></div></div>";
+      "</div>" +
+      (state.includeQr ? '<div class="cb-qr"></div>' : "") +
+      '<div class="cb-bar"></div></div>';
+  }
+
+  /* ---------------------------------------------------------
+     Cartão digital (vCard + QR code)
+     --------------------------------------------------------- */
+  function vcardEscape(s) {
+    return String(s == null ? "" : s).replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\n/g, "\\n");
+  }
+
+  function buildVCard(f) {
+    var url = f.site ? (/^https?:\/\//i.test(f.site) ? f.site : "http://" + f.site) : "";
+    var lines = [
+      "BEGIN:VCARD",
+      "VERSION:3.0",
+      "N:;" + vcardEscape(f.nome) + ";;;",
+      "FN:" + vcardEscape(f.nome || "Contacto"),
+      f.empresa ? "ORG:" + vcardEscape(f.empresa) : "",
+      f.cargo ? "TITLE:" + vcardEscape(f.cargo) : "",
+      f.telefone ? "TEL;TYPE=CELL:" + vcardEscape(f.telefone) : "",
+      f.email ? "EMAIL:" + vcardEscape(f.email) : "",
+      url ? "URL:" + vcardEscape(url) : "",
+      f.endereco ? "ADR;TYPE=WORK:;;" + vcardEscape(f.endereco) + ";;;;" : "",
+      f.slogan ? "NOTE:" + vcardEscape(f.slogan) : "",
+      "END:VCARD"
+    ].filter(Boolean);
+    return lines.join("\n");
+  }
+
+  function renderQrInto(el, text, size) {
+    if (!el) return;
+    el.innerHTML = "";
+    if (typeof window.QRCode !== "function" || !text) return;
+    try {
+      new window.QRCode(el, {
+        text: text, width: size, height: size,
+        colorDark: "#000000", colorLight: "#ffffff",
+        correctLevel: window.QRCode.CorrectLevel.M
+      });
+    } catch (e) { /* falha a gerar o QR (biblioteca não carregou?) — ignora, o resto do cartão continua normal */ }
+  }
+
+  function openDigitalCard() {
+    var f = state.fields;
+    $("#digitalcard-name").textContent = f.nome || f.empresa || "Cartão Digital";
+    renderQrInto($("#digitalcard-qr"), buildVCard(f), 220);
+    $("#digitalcard-modal").classList.remove("hidden");
+  }
+  function closeDigitalCard() { $("#digitalcard-modal").classList.add("hidden"); }
+
+  function downloadVCard() {
+    var blob = new Blob([buildVCard(state.fields)], { type: "text/vcard" });
+    var link = document.createElement("a");
+    link.download = fileBaseName() + ".vcf";
+    link.href = URL.createObjectURL(blob);
+    link.click();
+    window.setTimeout(function () { URL.revokeObjectURL(link.href); }, 4000);
+  }
+
+  function downloadQrPng() {
+    var canvas = $("#digitalcard-qr canvas");
+    if (!canvas) { flashStatus("O QR ainda não está pronto."); return; }
+    var link = document.createElement("a");
+    link.download = fileBaseName() + "-qr.png";
+    link.href = canvas.toDataURL("image/png");
+    link.click();
   }
 
   function buildAdBoard(tpl, colors, f) {
@@ -503,6 +597,7 @@
         var isFront = el.classList.contains("front");
         el.classList.toggle("active", (isFront && state.side === "front") || (!isFront && state.side === "back"));
       });
+      if (state.includeQr) renderQrInto(board.querySelector(".cb-qr"), buildVCard(f), 92);
     } else {
       board.innerHTML = buildAdBoard(tpl, colors, f);
     }
@@ -546,6 +641,9 @@
     renderBoard();
     var buyBlock = $("#buy-print-block");
     if (buyBlock) buyBlock.style.display = getFormat(id).printable ? "" : "none";
+    var qrRow = $("#include-qr-row");
+    if (qrRow) qrRow.style.display = getFormat(id).type === "card" ? "" : "none";
+    renderAddQtyOptions();
   }
 
   /* ---------------------------------------------------------
@@ -570,6 +668,7 @@
       fields: Object.assign({}, state.fields),
       colorOverride: Object.assign({}, state.colorOverride),
       logo: state.logo,
+      includeQr: state.includeQr,
       updatedAt: Date.now()
     };
   }
@@ -598,12 +697,15 @@
     state.fields = Object.assign({}, p.fields);
     state.colorOverride = Object.assign({ primary: "", secondary: "" }, p.colorOverride);
     state.logo = p.logo || null;
+    state.includeQr = p.includeQr !== false;
     state.side = "front";
 
     renderFormatTabs(); renderSideTabs();
     $("#template-category-filter").value = getTemplate(state.templateId).category;
     renderTemplatePicker(state.templateId ? getTemplate(state.templateId).category : "all");
     fillFormFromState();
+    var qrCheckbox = $("#f-include-qr");
+    if (qrCheckbox) qrCheckbox.checked = state.includeQr;
     renderBoard();
     showSection("editor");
     flashStatus("Projeto \"" + p.name + "\" carregado no editor.");
@@ -740,6 +842,38 @@
     });
   }
 
+  // Dimensões reais de impressão (mm) por formato — usadas para gerar um PDF no
+  // tamanho exato do produto físico, em vez de uma folha genérica A4.
+  var PRINT_SIZE_MM = {
+    card: { w: 85, h: 55 },
+    flyer: { w: 148, h: 210 },
+    post: { w: 100, h: 100 },
+    story: { w: 100, h: 177.8 }
+  };
+
+  function downloadPDF() {
+    if (typeof window.html2canvas !== "function") {
+      flashStatus("Não foi possível carregar o exportador de imagem (sem conexão?).");
+      return;
+    }
+    if (!window.jspdf || typeof window.jspdf.jsPDF !== "function") {
+      flashStatus("Não foi possível carregar o exportador de PDF (sem conexão?).");
+      return;
+    }
+    var board = $("#art-board");
+    var size = PRINT_SIZE_MM[state.formatId] || PRINT_SIZE_MM.card;
+    flashStatus("Gerando PDF...");
+    window.html2canvas(board, { scale: 4, backgroundColor: "#ffffff", useCORS: true }).then(function (canvas) {
+      var orientation = size.w >= size.h ? "landscape" : "portrait";
+      var pdf = new window.jspdf.jsPDF({ orientation: orientation, unit: "mm", format: [size.w, size.h] });
+      pdf.addImage(canvas.toDataURL("image/jpeg", 0.95), "JPEG", 0, 0, size.w, size.h);
+      pdf.save(fileBaseName() + "-" + state.formatId + (getFormat(state.formatId).type === "card" ? "-" + state.side : "") + ".pdf");
+      flashStatus("PDF baixado com sucesso.");
+    }).catch(function () {
+      flashStatus("Falha ao gerar o PDF. Tente novamente.");
+    });
+  }
+
   function shareBoard() {
     if (typeof window.html2canvas !== "function") {
       flashStatus("Não foi possível carregar o exportador de imagem (sem conexão?).");
@@ -856,22 +990,180 @@
       .then(function (canvas) { return canvas.toDataURL("image/png"); });
   }
 
-  function openCheckoutModal() {
+  /* ---------------------------------------------------------
+     Tabela de preços (pública, só para mostrar subtotais — o preço
+     cobrado é sempre recalculado no servidor)
+     --------------------------------------------------------- */
+  var priceState = { table: {}, currency: "eur" };
+  function loadPriceTable() {
+    return fetch("/api/prices")
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        priceState.table = data.table || {};
+        priceState.currency = data.currency || "eur";
+      })
+      .catch(function () { /* mantém tabela vazia — preços simplesmente não aparecem */ });
+  }
+  function priceFor(format, qty) {
+    var forFormat = priceState.table[format];
+    return forFormat && forFormat[qty] != null ? forFormat[qty] : null;
+  }
+  function formatMoney(cents) {
+    return ((cents || 0) / 100).toLocaleString("pt-PT", { style: "currency", currency: (priceState.currency || "eur").toUpperCase() });
+  }
+
+  function renderAddQtyOptions() {
+    var sel = $("#add-qty");
+    if (!sel) return;
+    var format = getFormat(state.formatId);
+    if (!format.printable) { sel.innerHTML = ""; return; }
+    sel.innerHTML = format.printQuantities.map(function (q) {
+      var cents = priceFor(format.id, q);
+      return '<option value="' + q + '">' + q + " unidades" + (cents != null ? " — " + formatMoney(cents) : "") + "</option>";
+    }).join("");
+  }
+
+  /* ---------------------------------------------------------
+     Carrinho (vários designs/formatos numa só compra)
+     --------------------------------------------------------- */
+  var CART_STORAGE_KEY = "uniads_cart_v1";
+  var CART_MAX_ITEMS = 10;
+
+  function loadCart() {
+    try {
+      var raw = localStorage.getItem(CART_STORAGE_KEY);
+      state.cart = raw ? JSON.parse(raw) : [];
+    } catch (e) { state.cart = []; }
+  }
+  function persistCart() {
+    try {
+      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(state.cart));
+    } catch (e) {
+      flashStatus("Não foi possível guardar o carrinho (armazenamento cheio?).");
+    }
+  }
+  function updateCartBadge() {
+    var badge = $("#cart-count");
+    if (!badge) return;
+    badge.textContent = state.cart.length;
+    badge.classList.toggle("hidden", state.cart.length === 0);
+  }
+
+  function addToCart() {
     var format = getFormat(state.formatId);
     if (!format.printable) return;
+    if (state.cart.length >= CART_MAX_ITEMS) {
+      flashStatus("Máximo de " + CART_MAX_ITEMS + " itens no carrinho.");
+      return;
+    }
+    var qty = parseInt($("#add-qty").value, 10);
+    if (!qty) return;
+
+    flashStatus("A adicionar ao carrinho...");
+    boardToPngBase64()
+      .then(function (imageBase64) {
+        var tpl = getTemplate(state.templateId);
+        state.cart.push({
+          id: uid(),
+          templateId: state.templateId,
+          templateName: tpl.name,
+          formatId: state.formatId,
+          formatLabel: format.label,
+          fields: Object.assign({}, state.fields),
+          colorOverride: Object.assign({}, state.colorOverride),
+          logo: state.logo,
+          includeQr: state.includeQr,
+          quantity: qty,
+          amountCents: priceFor(format.id, qty),
+          imageBase64: imageBase64
+        });
+        persistCart();
+        updateCartBadge();
+        flashStatus("Adicionado ao carrinho.");
+      })
+      .catch(function () {
+        flashStatus("Não foi possível preparar a arte para o carrinho.");
+      });
+  }
+
+  function removeFromCart(id) {
+    state.cart = state.cart.filter(function (it) { return it.id !== id; });
+    persistCart();
+    updateCartBadge();
+    renderCartModal();
+  }
+
+  function cartTotalCents() {
+    return state.cart.reduce(function (sum, it) { return sum + (it.amountCents || 0); }, 0);
+  }
+
+  function renderCartModal() {
+    var wrap = $("#cart-items");
+    if (!state.cart.length) {
+      wrap.innerHTML = '<p class="empty-note">O carrinho está vazio. Adiciona um design no editor.</p>';
+    } else {
+      wrap.innerHTML = state.cart.map(function (it) {
+        return (
+          '<div class="cart-item" data-id="' + it.id + '">' +
+          '<div class="cart-item-thumb"><div class="art-board" data-format="' + it.formatId + '"></div></div>' +
+          '<div class="cart-item-info"><strong>' + escapeHtml(it.templateName) + "</strong>" +
+          "<span>" + escapeHtml(it.formatLabel) + " · " + it.quantity + " un.</span>" +
+          "<span>" + (it.amountCents != null ? formatMoney(it.amountCents) : "—") + "</span></div>" +
+          '<button type="button" class="cart-item-remove" data-remove="' + it.id + '" aria-label="Remover">&times;</button>' +
+          "</div>"
+        );
+      }).join("");
+
+      state.cart.forEach(function (it) {
+        var board = wrap.querySelector('.cart-item[data-id="' + it.id + '"] .art-board');
+        if (!board) return;
+        var prev = { templateId: state.templateId, formatId: state.formatId, fields: state.fields, colorOverride: state.colorOverride, logo: state.logo, includeQr: state.includeQr, side: state.side };
+        state.templateId = it.templateId; state.formatId = it.formatId; state.fields = it.fields;
+        state.colorOverride = it.colorOverride; state.logo = it.logo; state.includeQr = it.includeQr; state.side = "front";
+        renderBoard(board);
+        state.templateId = prev.templateId; state.formatId = prev.formatId; state.fields = prev.fields;
+        state.colorOverride = prev.colorOverride; state.logo = prev.logo; state.includeQr = prev.includeQr; state.side = prev.side;
+      });
+
+      wrap.querySelectorAll("[data-remove]").forEach(function (btn) {
+        btn.addEventListener("click", function () { removeFromCart(btn.getAttribute("data-remove")); });
+      });
+    }
+    $("#cart-total-value").textContent = state.cart.length ? formatMoney(cartTotalCents()) : "—";
+  }
+
+  function openCart() { renderCartModal(); $("#cart-modal").classList.remove("hidden"); }
+  function closeCart() { $("#cart-modal").classList.add("hidden"); }
+
+  /* ---------------------------------------------------------
+     Checkout (Stripe Checkout + Gelato) — todos os itens do carrinho
+     --------------------------------------------------------- */
+  function renderCheckoutSummary() {
+    var box = $("#checkout-summary");
+    box.innerHTML = state.cart.map(function (it) {
+      return (
+        '<div class="cs-row"><span>' + escapeHtml(it.templateName) + " · " + it.quantity + " un.</span><span>" +
+        (it.amountCents != null ? formatMoney(it.amountCents) : "—") + "</span></div>"
+      );
+    }).join("") + '<div class="cs-row cs-total"><span>Total</span><span>' + formatMoney(cartTotalCents()) + "</span></div>";
+  }
+
+  function openCheckoutModal() {
+    if (!state.cart.length) {
+      flashStatus("O carrinho está vazio.");
+      return;
+    }
     $("#checkout-status").textContent = "";
     $("#co-email").value = "";
-    var qtySelect = $("#co-quantity");
-    qtySelect.innerHTML = format.printQuantities.map(function (q) {
-      return '<option value="' + q + '">' + q + " unidades</option>";
-    }).join("");
-    $("#checkout-title").textContent = "Comprar " + format.label + " impressos";
+    renderCheckoutSummary();
+    closeCart();
     $("#checkout-modal").classList.remove("hidden");
   }
   function closeCheckoutModal() { $("#checkout-modal").classList.add("hidden"); }
 
   function submitCheckout(e) {
     e.preventDefault();
+    if (!state.cart.length) return;
     var submitBtn = $("#checkout-submit");
     var statusEl = $("#checkout-status");
     var country = $("#co-country").value.trim().toUpperCase();
@@ -893,28 +1185,23 @@
       email: $("#co-email").value.trim()
     };
 
-    submitBtn.disabled = true;
-    statusEl.textContent = "A preparar a arte final...";
+    var items = state.cart.map(function (it) {
+      return { templateId: it.templateId, format: it.formatId, quantity: it.quantity, fields: it.fields, imageBase64: it.imageBase64 };
+    });
 
-    boardToPngBase64()
-      .then(function (imageBase64) {
-        statusEl.textContent = "A abrir o pagamento...";
-        return fetch("/api/create-checkout-session", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            templateId: state.templateId,
-            format: state.formatId,
-            quantity: parseInt($("#co-quantity").value, 10),
-            fields: state.fields,
-            imageBase64: imageBase64,
-            shipping: shipping
-          })
-        });
-      })
+    submitBtn.disabled = true;
+    statusEl.textContent = "A abrir o pagamento...";
+
+    fetch("/api/create-checkout-session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ items: items, shipping: shipping })
+    })
       .then(function (res) { return res.json().then(function (data) { return { ok: res.ok, data: data }; }); })
       .then(function (result) {
         if (!result.ok || !result.data.url) throw new Error(result.data.error || "Falha ao iniciar o pagamento.");
+        state.cart = [];
+        persistCart();
         window.location.href = result.data.url;
       })
       .catch(function (err) {
@@ -962,6 +1249,7 @@
 
     $("#save-project").addEventListener("click", saveCurrentProject);
     $("#download-png").addEventListener("click", downloadPNG);
+    $("#download-pdf").addEventListener("click", downloadPDF);
     $("#print-board").addEventListener("click", printBoard);
     var shareBtn = $("#share-board");
     if (shareBtn) {
@@ -981,11 +1269,28 @@
     $("#zoom-close").addEventListener("click", closeZoom);
     $("#zoom-modal").addEventListener("click", function (e) { if (e.target.id === "zoom-modal") closeZoom(); });
 
-    $("#buy-print-btn").addEventListener("click", openCheckoutModal);
+    $("#f-include-qr").addEventListener("change", function (e) { state.includeQr = e.target.checked; renderBoard(); });
+    $("#digitalcard-btn").addEventListener("click", openDigitalCard);
+    $("#digitalcard-close").addEventListener("click", closeDigitalCard);
+    $("#digitalcard-modal").addEventListener("click", function (e) { if (e.target.id === "digitalcard-modal") closeDigitalCard(); });
+    $("#digitalcard-download-vcf").addEventListener("click", downloadVCard);
+    $("#digitalcard-download-qr").addEventListener("click", downloadQrPng);
+
+    loadCart();
+    updateCartBadge();
+    loadPriceTable().then(renderAddQtyOptions);
+    $("#add-to-cart-btn").addEventListener("click", addToCart);
+    $("#cart-btn").addEventListener("click", openCart);
+    $("#cart-close").addEventListener("click", closeCart);
+    $("#cart-modal").addEventListener("click", function (e) { if (e.target.id === "cart-modal") closeCart(); });
+    $("#cart-checkout-btn").addEventListener("click", openCheckoutModal);
+
     $("#checkout-close").addEventListener("click", closeCheckoutModal);
     $("#checkout-modal").addEventListener("click", function (e) { if (e.target.id === "checkout-modal") closeCheckoutModal(); });
     $("#checkout-form").addEventListener("submit", submitCheckout);
     $("#buy-print-block").style.display = getFormat(state.formatId).printable ? "" : "none";
+    $("#include-qr-row").style.display = getFormat(state.formatId).type === "card" ? "" : "none";
+    renderAddQtyOptions();
 
     document.querySelectorAll('[data-nav][data-section]').forEach(function (btn) {
       btn.addEventListener("click", function () { showSection(btn.getAttribute("data-section")); });
@@ -994,6 +1299,12 @@
       ? window.location.hash.slice(1)
       : "categorias";
     showSection(initialSection, true);
+
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", function () {
+        navigator.serviceWorker.register("/sw.js").catch(function () { /* sem PWA, site continua normal */ });
+      });
+    }
   }
 
   document.addEventListener("DOMContentLoaded", init);

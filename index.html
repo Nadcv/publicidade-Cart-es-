@@ -17,6 +17,12 @@
 <meta name="twitter:description" content="Crie cartões de visita e artes publicitárias profissionais para qualquer segmento." />
 <meta name="twitter:image" content="assets/og-image.png" />
 
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#0c1018" />
+<link rel="apple-touch-icon" href="assets/icon-192.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="UniAds" />
+
 <script>try{document.documentElement.setAttribute("data-theme",localStorage.getItem("uniads_theme")==="light"?"light":"dark")}catch(e){}</script>
 <link rel="stylesheet" href="assets/css/style.css" />
 </head>
@@ -43,6 +49,9 @@
       <option value="es">ES</option>
     </select>
     <button id="theme-toggle" class="btn btn-ghost btn-sm" type="button" title="Alternar tema claro/escuro">Modo claro</button>
+    <button id="cart-btn" class="btn btn-ghost btn-sm cart-btn" type="button" title="Carrinho">
+      🛒 <span id="cart-count" class="cart-count hidden">0</span>
+    </button>
     <button id="new-project-btn" class="btn btn-primary" data-i18n="btn.novoProjeto">+ Novo Projeto</button>
   </header>
 
@@ -153,16 +162,30 @@
           </div>
         </div>
 
+        <div class="panel-block" id="digital-card-block">
+          <h3 data-i18n="editor.cartaoDigital">Cartão Digital</h3>
+          <label id="include-qr-row" class="checkbox-row">
+            <input type="checkbox" id="f-include-qr" checked />
+            <span data-i18n="editor.incluirQr">Incluir QR code com os meus contactos no verso do cartão</span>
+          </label>
+          <p class="hint" data-i18n="editor.qrHint">Quem receber o cartão físico lê o QR e guarda o teu contacto automaticamente no telemóvel.</p>
+          <button id="digitalcard-btn" class="btn btn-secondary btn-sm" type="button" data-i18n="editor.verCartaoDigital">Ver Cartão Digital</button>
+        </div>
+
         <div class="panel-block actions-block">
           <button id="save-project" class="btn btn-primary" data-i18n="editor.salvarProjeto">Salvar Projeto</button>
           <button id="download-png" class="btn btn-secondary" data-i18n="editor.baixarPng">Baixar PNG</button>
+          <button id="download-pdf" class="btn btn-secondary" data-i18n="editor.baixarPdf">Baixar PDF</button>
           <button id="print-board" class="btn btn-secondary" data-i18n="editor.imprimir">Imprimir</button>
           <button id="share-board" class="btn btn-secondary" type="button" data-i18n="editor.partilhar">Partilhar</button>
         </div>
         <div class="panel-block" id="buy-print-block">
           <h3 data-i18n="editor.impressosFisicos">Impressos físicos</h3>
           <p class="hint" data-i18n="editor.impressosHint" style="margin-top:0;">Manda imprimir e entregar em casa (disponível para Cartão de Visita e Flyer A5).</p>
-          <button id="buy-print-btn" class="btn btn-primary" type="button" data-i18n="editor.comprarImpressos">Comprar impressos</button>
+          <div class="cart-add-row">
+            <select id="add-qty"></select>
+            <button id="add-to-cart-btn" class="btn btn-primary" type="button" data-i18n="editor.adicionarCarrinho">Adicionar ao Carrinho</button>
+          </div>
         </div>
         <p id="editor-status" class="editor-status" role="status" aria-live="polite"></p>
       </div>
@@ -202,7 +225,7 @@
       <h2 data-i18n="ajuda.title">Como funciona</h2>
     </div>
     <ol class="steps">
-      <li><span class="step-num">1</span><div><strong data-i18n="ajuda.passo1.titulo">Escolha o segmento</strong><p data-i18n="ajuda.passo1.desc">Aviação, casamentos, gastronomia, imóveis, beleza, tecnologia, saúde, eventos, moda, automotivo, educação ou corporativo.</p></div></li>
+      <li><span class="step-num">1</span><div><strong data-i18n="ajuda.passo1.titulo">Escolha o segmento</strong><p data-i18n="ajuda.passo1.desc">Aviação, casamentos, gastronomia, imóveis, beleza, tecnologia, saúde, eventos, moda, automotivo, educação, corporativo, pet care ou fitness.</p></div></li>
       <li><span class="step-num">2</span><div><strong data-i18n="ajuda.passo2.titulo">Selecione o formato</strong><p data-i18n="ajuda.passo2.desc">Cartão de visita (frente e verso), post para redes sociais, story ou flyer A5.</p></div></li>
       <li><span class="step-num">3</span><div><strong data-i18n="ajuda.passo3.titulo">Personalize</strong><p data-i18n="ajuda.passo3.desc">Textos, logotipo e cores — a arte é montada automaticamente respeitando o layout do modelo.</p></div></li>
       <li><span class="step-num">4</span><div><strong data-i18n="ajuda.passo4.titulo">Exporte</strong><p data-i18n="ajuda.passo4.desc">Baixe em PNG em alta resolução, imprima direto do navegador ou salve o projeto para editar depois.</p></div></li>
@@ -232,22 +255,46 @@
     </div>
   </div>
 
+  <!-- ===== CARRINHO ===== -->
+  <div id="cart-modal" class="modal-overlay hidden" role="dialog" aria-modal="true">
+    <div class="modal-box">
+      <button id="cart-close" class="modal-close" type="button" aria-label="Fechar" data-i18n-aria="modal.fechar">&times;</button>
+      <h2 data-i18n="cart.title">O teu carrinho</h2>
+      <div id="cart-items" class="cart-items"></div>
+      <div id="cart-total-row" class="cart-total-row">
+        <span data-i18n="cart.total">Total</span>
+        <strong id="cart-total-value">—</strong>
+      </div>
+      <button id="cart-checkout-btn" class="btn btn-primary btn-lg" style="width:100%;margin-top:14px;" type="button" data-i18n="cart.finalizar">Finalizar Compra</button>
+      <p id="cart-status" class="editor-status" role="status" aria-live="polite"></p>
+    </div>
+  </div>
+
+  <!-- ===== CARTÃO DIGITAL (QR / vCard) ===== -->
+  <div id="digitalcard-modal" class="modal-overlay hidden" role="dialog" aria-modal="true">
+    <div class="modal-box digitalcard-box">
+      <button id="digitalcard-close" class="modal-close" type="button" aria-label="Fechar" data-i18n-aria="modal.fechar">&times;</button>
+      <h2 data-i18n="digitalcard.title">Cartão Digital</h2>
+      <p id="digitalcard-name" style="font-weight:700;margin:4px 0 0;"></p>
+      <div id="digitalcard-qr"></div>
+      <p class="hint" data-i18n="digitalcard.hint">Aponta a câmara do telemóvel para o código e guarda o contacto diretamente.</p>
+      <div class="digitalcard-actions">
+        <button id="digitalcard-download-vcf" class="btn btn-secondary btn-sm" type="button" data-i18n="digitalcard.baixarVcf">Descarregar .vcf</button>
+        <button id="digitalcard-download-qr" class="btn btn-secondary btn-sm" type="button" data-i18n="digitalcard.baixarQr">Descarregar QR (PNG)</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ===== CHECKOUT MODAL ===== -->
   <div id="checkout-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="checkout-title">
     <div class="modal-box">
       <button id="checkout-close" class="modal-close" type="button" aria-label="Fechar" data-i18n-aria="modal.fechar">&times;</button>
-      <h2 id="checkout-title">Comprar cartões impressos</h2>
+      <h2 id="checkout-title" data-i18n="checkout.title">Finalizar compra</h2>
       <p class="hint" data-i18n="checkout.hint">Impressão e envio por um parceiro externo (Gelato). O pagamento é processado de forma segura pela Stripe.</p>
 
-      <form id="checkout-form">
-        <label><span data-i18n="checkout.quantidade">Quantidade</span>
-          <select id="co-quantity">
-            <option value="100">100 unidades</option>
-            <option value="250">250 unidades</option>
-            <option value="500">500 unidades</option>
-          </select>
-        </label>
+      <div id="checkout-summary" class="checkout-summary"></div>
 
+      <form id="checkout-form">
         <div class="field-grid" style="margin-top:14px;">
           <label><span data-i18n="checkout.nome">Nome</span> <input type="text" id="co-first-name" required /></label>
           <label><span data-i18n="checkout.apelido">Apelido</span> <input type="text" id="co-last-name" required /></label>
@@ -270,6 +317,8 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="assets/js/i18n.js"></script>
 <script src="assets/js/app.js"></script>
 </body>

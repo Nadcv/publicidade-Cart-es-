@@ -63,7 +63,23 @@
       "editor.impressosFisicos": "Impressos físicos",
       "editor.impressosHint": "Manda imprimir e entregar em casa (disponível para Cartão de Visita e Flyer A5).",
       "editor.comprarImpressos": "Comprar impressos",
+      "editor.adicionarCarrinho": "Adicionar ao Carrinho",
       "editor.ampliar": "Ampliar",
+      "editor.baixarPdf": "Baixar PDF",
+      "editor.cartaoDigital": "Cartão Digital",
+      "editor.incluirQr": "Incluir QR code com os meus contactos no verso do cartão",
+      "editor.qrHint": "Quem receber o cartão físico lê o QR e guarda o teu contacto automaticamente no telemóvel.",
+      "editor.verCartaoDigital": "Ver Cartão Digital",
+
+      "cart.title": "O teu carrinho",
+      "cart.total": "Total",
+      "cart.finalizar": "Finalizar Compra",
+      "cart.vazio": "O carrinho está vazio.",
+
+      "digitalcard.title": "Cartão Digital",
+      "digitalcard.hint": "Aponta a câmara do telemóvel para o código e guarda o contacto diretamente.",
+      "digitalcard.baixarVcf": "Descarregar .vcf",
+      "digitalcard.baixarQr": "Descarregar QR (PNG)",
 
       "projetos.title": "Meus Projetos",
       "projetos.desc": "Salvos neste navegador. Edite, duplique ou exclua quando quiser.",
@@ -71,7 +87,7 @@
 
       "ajuda.title": "Como funciona",
       "ajuda.passo1.titulo": "Escolha o segmento",
-      "ajuda.passo1.desc": "Aviação, casamentos, gastronomia, imóveis, beleza, tecnologia, saúde, eventos, moda, automotivo, educação ou corporativo.",
+      "ajuda.passo1.desc": "Aviação, casamentos, gastronomia, imóveis, beleza, tecnologia, saúde, eventos, moda, automotivo, educação, corporativo, pet care ou fitness.",
       "ajuda.passo2.titulo": "Selecione o formato",
       "ajuda.passo2.desc": "Cartão de visita (frente e verso), post para redes sociais, story ou flyer A5.",
       "ajuda.passo3.titulo": "Personalize",
@@ -84,6 +100,7 @@
 
       "footer.texto": "UniAds Studio — parte do ecossistema Unisocial.",
 
+      "checkout.title": "Finalizar compra",
       "checkout.hint": "Impressão e envio por um parceiro externo (Gelato). O pagamento é processado de forma segura pela Stripe.",
       "checkout.quantidade": "Quantidade",
       "checkout.nome": "Nome",
@@ -153,7 +170,23 @@
       "editor.impressosFisicos": "Printed copies",
       "editor.impressosHint": "Get it printed and delivered (available for Business Card and A5 Flyer).",
       "editor.comprarImpressos": "Order prints",
+      "editor.adicionarCarrinho": "Add to Cart",
       "editor.ampliar": "Zoom in",
+      "editor.baixarPdf": "Download PDF",
+      "editor.cartaoDigital": "Digital Card",
+      "editor.incluirQr": "Include a QR code with my contact info on the back of the card",
+      "editor.qrHint": "Whoever gets the physical card can scan the QR and save your contact straight to their phone.",
+      "editor.verCartaoDigital": "View Digital Card",
+
+      "cart.title": "Your cart",
+      "cart.total": "Total",
+      "cart.finalizar": "Checkout",
+      "cart.vazio": "Your cart is empty.",
+
+      "digitalcard.title": "Digital Card",
+      "digitalcard.hint": "Point your phone's camera at the code to save the contact directly.",
+      "digitalcard.baixarVcf": "Download .vcf",
+      "digitalcard.baixarQr": "Download QR (PNG)",
 
       "projetos.title": "My Projects",
       "projetos.desc": "Saved in this browser. Edit, duplicate or delete whenever you want.",
@@ -161,7 +194,7 @@
 
       "ajuda.title": "How it works",
       "ajuda.passo1.titulo": "Choose a segment",
-      "ajuda.passo1.desc": "Aviation, weddings, food, real estate, beauty, technology, health, events, fashion, automotive, education or corporate.",
+      "ajuda.passo1.desc": "Aviation, weddings, food, real estate, beauty, technology, health, events, fashion, automotive, education, corporate, pet care or fitness.",
       "ajuda.passo2.titulo": "Pick a format",
       "ajuda.passo2.desc": "Business card (front and back), social media post, story or A5 flyer.",
       "ajuda.passo3.titulo": "Customize",
@@ -174,6 +207,7 @@
 
       "footer.texto": "UniAds Studio — part of the Unisocial ecosystem.",
 
+      "checkout.title": "Checkout",
       "checkout.hint": "Printing and shipping by an external partner (Gelato). Payment is securely processed by Stripe.",
       "checkout.quantidade": "Quantity",
       "checkout.nome": "First name",
@@ -243,7 +277,23 @@
       "editor.impressosFisicos": "Impresos físicos",
       "editor.impressosHint": "Manda a imprimir y entregar a domicilio (disponible para Tarjeta de Visita y Flyer A5).",
       "editor.comprarImpressos": "Comprar impresos",
+      "editor.adicionarCarrinho": "Añadir al Carrito",
       "editor.ampliar": "Ampliar",
+      "editor.baixarPdf": "Descargar PDF",
+      "editor.cartaoDigital": "Tarjeta Digital",
+      "editor.incluirQr": "Incluir un código QR con mis contactos en el reverso de la tarjeta",
+      "editor.qrHint": "Quien reciba la tarjeta física puede leer el QR y guardar tu contacto automáticamente en el móvil.",
+      "editor.verCartaoDigital": "Ver Tarjeta Digital",
+
+      "cart.title": "Tu carrito",
+      "cart.total": "Total",
+      "cart.finalizar": "Finalizar Compra",
+      "cart.vazio": "El carrito está vacío.",
+
+      "digitalcard.title": "Tarjeta Digital",
+      "digitalcard.hint": "Apunta la cámara del móvil al código y guarda el contacto directamente.",
+      "digitalcard.baixarVcf": "Descargar .vcf",
+      "digitalcard.baixarQr": "Descargar QR (PNG)",
 
       "projetos.title": "Mis Proyectos",
       "projetos.desc": "Guardados en este navegador. Edita, duplica o elimina cuando quieras.",
@@ -251,7 +301,7 @@
 
       "ajuda.title": "Cómo funciona",
       "ajuda.passo1.titulo": "Elige el segmento",
-      "ajuda.passo1.desc": "Aviación, bodas, gastronomía, inmuebles, belleza, tecnología, salud, eventos, moda, automotriz, educación o corporativo.",
+      "ajuda.passo1.desc": "Aviación, bodas, gastronomía, inmuebles, belleza, tecnología, salud, eventos, moda, automotriz, educación, corporativo, pet care o fitness.",
       "ajuda.passo2.titulo": "Selecciona el formato",
       "ajuda.passo2.desc": "Tarjeta de visita (frente y dorso), post para redes sociales, historia o flyer A5.",
       "ajuda.passo3.titulo": "Personaliza",
@@ -264,6 +314,7 @@
 
       "footer.texto": "UniAds Studio — parte del ecosistema Unisocial.",
 
+      "checkout.title": "Finalizar compra",
       "checkout.hint": "Impresión y envío por un socio externo (Gelato). El pago se procesa de forma segura con Stripe.",
       "checkout.quantidade": "Cantidad",
       "checkout.nome": "Nombre",

@@ -10,14 +10,17 @@ module.exports = async function handler(req, res) {
   }
 
   var id = req.query.id;
-  if (!id) {
+  var itemId = req.query.item;
+  if (!id && !itemId) {
     res.status(400).json({ error: "id em falta." });
     return;
   }
 
   try {
     var supabase = getSupabaseAdmin();
-    var result = await supabase.from("orders").select("image_data").eq("id", id).single();
+    var result = itemId
+      ? await supabase.from("order_items").select("image_data").eq("id", itemId).single()
+      : await supabase.from("orders").select("image_data").eq("id", id).single();
 
     if (result.error || !result.data || !result.data.image_data) {
       res.status(404).json({ error: "Imagem não encontrada." });

@@ -21,8 +21,8 @@ module.exports = async function handler(req, res) {
     var result = await supabase
       .from("orders")
       .select(
-        "id, status, product_format, template_id, quantity, amount_cents, currency, " +
-          "shipping_name, shipping_address, contact_email, gelato_order_id, error_message, created_at",
+        "id, status, product_format, template_id, quantity, item_count, amount_cents, currency, " +
+          "shipping_name, shipping_address, contact_email, gelato_order_id, referral_code, error_message, created_at",
         { count: "exact" }
       )
       .order("created_at", { ascending: false })

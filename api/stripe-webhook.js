@@ -2,6 +2,7 @@ var Stripe = require("stripe");
 var { getSupabaseAdmin } = require("./lib/supabase");
 var { createGelatoOrder } = require("./lib/gelato");
 var { sendEmail, orderConfirmationHtml } = require("./lib/email");
+var { createReferralCode } = require("./lib/referral");
 
 function readRawBody(req) {
   return new Promise(function (resolve, reject) {
@@ -58,20 +59,80 @@ module.exports = async function handler(req, res) {
 
     await supabase.from("orders").update({ status: "paid", updated_at: new Date().toISOString() }).eq("id", orderId);
 
+    var itemsResult = await supabase.from("order_items").select("*").eq("order_id", orderId);
+    if (itemsResult.error) throw itemsResult.error;
+    var lineItems = itemsResult.data;
+
+    // Compatibilidade: pedidos criados antes da tabela order_items existir não têm
+    // nenhuma linha lá — tratamos o próprio pedido como um único item.
+    if (!lineItems.length) {
+      lineItems = [
+        {
+          id: null,
+          product_format: order.product_format,
+          quantity: order.quantity,
+          image_url: order.image_url
+        }
+      ];
+    }
+
     var addr = order.shipping_address;
-    var gelatoOrder = await createGelatoOrder({
-      orderId: order.id,
-      format: order.product_format,
-      currency: order.currency,
-      quantity: order.quantity,
-      imageUrl: order.image_url,
-      shipping: addr
-    });
+    var failures = [];
+    var firstGelatoId = null;
+
+    for (var i = 0; i < lineItems.length; i++) {
+      var item = lineItems[i];
+      try {
+        var gelatoOrder = await createGelatoOrder({
+          orderId: order.id,
+          referenceSuffix: item.id || String(i),
+          format: item.product_format,
+          currency: order.currency,
+          quantity: item.quantity,
+          imageUrl: item.image_url,
+          shipping: addr
+        });
+        if (!firstGelatoId) firstGelatoId = gelatoOrder.id;
+        if (item.id) {
+          await supabase.from("order_items").update({ gelato_order_id: gelatoOrder.id }).eq("id", item.id);
+        }
+      } catch (itemErr) {
+        console.error("Falha ao enviar item para a Gelato (order_id=" + orderId + ", item=" + (item.id || i) + "):", itemErr);
+        failures.push((item.id || "item " + (i + 1)) + ": " + (itemErr.message || itemErr));
+        if (item.id) {
+          await supabase.from("order_items").update({ error_message: String(itemErr.message || itemErr) }).eq("id", item.id);
+        }
+      }
+    }
+
+    if (failures.length) {
+      await supabase
+        .from("orders")
+        .update({
+          status: "failed",
+          gelato_order_id: firstGelatoId,
+          error_message: failures.join(" | "),
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", orderId);
+      // Pagamento já foi cobrado — falha parcial/total no envio à Gelato precisa de
+      // reconciliação manual (ver order_items.error_message), não de retry automático.
+      res.status(200).json({ received: true });
+      return;
+    }
+
+    var referralCode = await createReferralCode(stripe, order.id);
 
     await supabase
       .from("orders")
-      .update({ status: "sent_to_print", gelato_order_id: gelatoOrder.id, updated_at: new Date().toISOString() })
+      .update({
+        status: "sent_to_print",
+        gelato_order_id: firstGelatoId,
+        referral_code: referralCode,
+        updated_at: new Date().toISOString()
+      })
       .eq("id", orderId);
+    order.referral_code = referralCode;
 
     // E-mail de confirmação é best-effort: uma falha aqui não deve marcar a encomenda
     // como falhada, já foi paga e enviada para impressão com sucesso.

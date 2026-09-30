@@ -23,14 +23,15 @@ async function createGelatoOrder(opts) {
     );
   }
 
+  var referenceId = opts.orderId + (opts.referenceSuffix ? "-" + opts.referenceSuffix : "");
   var body = {
     orderType: "order",
-    orderReferenceId: opts.orderId,
+    orderReferenceId: referenceId,
     customerReferenceId: opts.orderId,
     currency: opts.currency.toUpperCase(),
     items: [
       {
-        itemReferenceId: opts.orderId + "-" + (opts.format || "card"),
+        itemReferenceId: referenceId + "-" + (opts.format || "card"),
         productUid: productUid,
         files: [{ type: "default", url: opts.imageUrl }],
         quantity: opts.quantity

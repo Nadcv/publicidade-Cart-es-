@@ -15,30 +15,42 @@ Abra `http://localhost:8080`. Não precisa de `npm install`: é HTML/CSS/JS puro
 
 ## O que dá para fazer
 
-- **12 segmentos, 24 modelos**: cada segmento (`Companhias Aéreas`, `Casamentos`,
+- **14 segmentos, 28 modelos**: cada segmento (`Companhias Aéreas`, `Casamentos`,
   `Restaurantes & Gastronomia`, `Imobiliárias`, `Beleza & Estética`, `Tecnologia & Startups`,
   `Eventos & Festas`, `Saúde & Bem-estar`, `Automotivo`, `Educação`, `Moda`,
-  `Corporativo & Advocacia`) traz 2 modelos com paleta, layout e ícone próprios.
+  `Corporativo & Advocacia`, `Pet Shops & Veterinária`, `Fitness & Academias`) traz 2 modelos
+  com paleta, layout e ícone próprios.
 - **4 formatos**: Cartão de Visita (frente/verso), Post Instagram, Story e Flyer A5 — a mesma
   identidade visual do modelo se adapta a cada formato.
 - **Editor ao vivo**: nome, cargo, empresa, slogan, telefone, e-mail, site, rede social e
   endereço atualizam a pré-visualização em tempo real; logotipo por upload (substitui o ícone
   do segmento) e cores primária/secundária personalizáveis por cima da paleta do modelo.
-- **Exportar**: PNG em alta resolução (via `html2canvas`, carregado por CDN — precisa de
-  internet), impressão direta do navegador, ou **partilhar** direto para outra app (Instagram,
-  WhatsApp, etc.) via Web Share API do navegador — em navegadores/dispositivos sem suporte,
-  cai automaticamente para download.
+- **Cartão Digital (QR + vCard)**: o verso do cartão de visita pode incluir um QR code (opção
+  ligada por omissão) que, ao ser lido, guarda o contacto diretamente no telemóvel de quem
+  recebe o cartão físico. Há também um botão "Ver Cartão Digital" com um QR maior e download
+  direto do ficheiro `.vcf`, disponível para qualquer formato.
+- **Exportar**: PNG em alta resolução ou **PDF no tamanho exato de impressão** (via
+  `html2canvas` + `jsPDF`, carregados por CDN — precisam de internet), impressão direta do
+  navegador, ou **partilhar** direto para outra app (Instagram, WhatsApp, etc.) via Web Share
+  API do navegador — em navegadores/dispositivos sem suporte, cai automaticamente para download.
 - **Meus Projetos**: salvar, editar, duplicar e excluir projetos — persistidos no
   `localStorage` do navegador (nada é enviado a um servidor).
+- **Carrinho com vários itens**: dá para adicionar vários designs/formatos/quantidades ao
+  carrinho (até 10 itens) e pagar tudo numa única compra/envio.
 - **Impressos físicos com cupão de desconto**: Cartão de Visita e Flyer A5 têm preços e
   quantidades próprios; no checkout da Stripe o cliente pode inserir um código de desconto
   (cupões geridos no dashboard da Stripe, não no código).
+- **Códigos de referência**: depois de um pedido pago, é gerado automaticamente um código de
+  desconto Stripe único que o cliente pode partilhar com amigos (ver `REFERRAL_COUPON_ID`).
 - **Consulta de encomendas** (`minhas-encomendas.html`): o cliente escreve o e-mail usado na
   compra e vê o estado de todos os pedidos que fez.
 - **Painel de administração** (`admin.html`, protegido por palavra-passe): lista todas as
-  encomendas (estado, formato, quantidade, valor, morada, e-mail) com paginação.
+  encomendas (estado, formato, quantidade, nº de itens, valor, morada, e-mail) com paginação, e
+  permite gerir depoimentos de clientes.
 - **E-mail de confirmação automático**: quando o pedido é enviado para impressão, o cliente
-  recebe um e-mail (via Resend) com o resumo da encomenda.
+  recebe um e-mail (via Resend) com o resumo da encomenda e o código de referência.
+- **Multi-idioma** (PT/EN/ES), **tema claro/escuro** e **app instalável (PWA)** — funciona como
+  app no telemóvel/computador, com ícone próprio e cache dos ficheiros estáticos.
 
 ## Arquitetura
 
@@ -47,26 +59,38 @@ index.html                Estrutura da página (hero, categorias, editor, projet
 pedido-confirmado.html    Página de retorno do Stripe Checkout (consulta /api/order-status)
 minhas-encomendas.html    Cliente consulta as suas encomendas pelo e-mail
 admin.html                Painel de administração (protegido por ADMIN_PASSWORD)
+manifest.json / sw.js     App instalável (PWA): manifest + service worker (cache dos estáticos,
+                          nunca de /api/*)
 
 assets/
   css/style.css           Tema da aplicação + sistema de "art board" (cartão/anúncio) themeable
                           via CSS custom properties (--tpl-primary, --tpl-bg, --tpl-icon, ...)
   js/app.js               CATEGORIES / TEMPLATES / FORMATS (dados) + estado do editor +
-                          renderização do board + projetos (localStorage) + exportação/partilha + checkout
+                          renderização do board + projetos/carrinho (localStorage) +
+                          exportação (PNG/PDF)/partilha + cartão digital (QR/vCard) + checkout
+  js/i18n.js              Traduções PT/EN/ES do chrome estático da interface
+  icon-192.png / icon-512.png / og-image.png   Ícones da PWA e imagem para redes sociais
 
 api/                      Funções serverless (tem de ficar na raiz — é a pasta que a Vercel
                           deteta automaticamente para isto, não pode ser movida)
-  create-checkout-session.js  Recebe o design, grava a encomenda (com a imagem em base64), cria a
-                              Stripe Checkout Session (com cupões de desconto ativados)
-  stripe-webhook.js           Confirma o pagamento, cria a encomenda na Gelato, envia e-mail
+  create-checkout-session.js  Recebe os itens do carrinho, grava o pedido + order_items (com a
+                              imagem em base64 de cada item), cria a Stripe Checkout Session
+                              (um line_item por item, cupões de desconto ativados)
+  stripe-webhook.js           Confirma o pagamento, cria uma encomenda na Gelato por item do
+                              carrinho, gera o código de referência e envia o e-mail
+  prices.js                   Tabela de preços pública (o carrinho mostra subtotais — o preço
+                              cobrado é sempre recalculado no servidor)
   order-status.js             Consulta o estado de uma encomenda (usado por pedido-confirmado.html)
-  order-image.js              Serve a arte de impressão de uma encomenda (lida da base de dados) —
-                              é esta URL que é passada à Gelato para descarregar o ficheiro
+  order-image.js              Serve a arte de impressão de uma encomenda ou de um item do carrinho
+                              (lida da base de dados) — é esta URL que a Gelato descarrega
   my-orders.js                Lista as encomendas de um e-mail (usado por minhas-encomendas.html)
-  admin/orders.js             Lista todas as encomendas, paginado (usado por admin.html)
-  lib/{supabase,gelato,price,email}.js   Helpers dos serviços externos
+  testimonials.js             Lista pública dos depoimentos aprovados
+  admin/orders.js              Lista todas as encomendas, paginado (usado por admin.html)
+  admin/testimonials.js        CRUD de depoimentos (protegido por ADMIN_PASSWORD)
+  lib/{supabase,gelato,price,email,adminAuth,referral}.js   Helpers dos serviços externos
 
-supabase/schema.sql       Tabela `orders` (ver secção de monetização abaixo)
+supabase/schema.sql       Tabelas `orders`, `order_items` e `testimonials` (ver secção de
+                          monetização abaixo)
 ```
 
 Cada modelo combina um `layout` (`split` | `topbar` | `diagonal` | `frame` | `centered`) com
@@ -79,10 +103,11 @@ template para garantir contraste — ver `TEMPLATES` em `app.js`.
 
 ## O que NÃO dá para fazer (e por quê)
 
-- **Exportação em PNG depende de internet**: `html2canvas` é carregado via CDN
-  (cdnjs.cloudflare.com); sem conexão, o botão "Baixar PNG" avisa e sugere usar "Imprimir".
-- **Projetos não sincronizam entre dispositivos**: ficam só no `localStorage` do navegador
-  onde foram salvos — não há backend nem conta de usuário.
+- **Exportação em PNG/PDF e o QR code dependem de internet**: `html2canvas`, `jsPDF` e
+  `qrcodejs` são carregados via CDN (cdnjs.cloudflare.com); sem conexão, os botões avisam e
+  sugerem usar "Imprimir" (que não depende de nenhuma dessas bibliotecas).
+- **Projetos e carrinho não sincronizam entre dispositivos**: ficam só no `localStorage` do
+  navegador onde foram guardados — não há backend nem conta de usuário.
 
 ## Monetização: cartões e flyers impressos (Stripe + Supabase + Gelato + Resend)
 
@@ -93,22 +118,25 @@ impressão e envio pela [Gelato](https://gelato.com) (rede de impressão sob enc
 pública, print-on-demand local ao destinatário).
 
 ```
-Cliente preenche morada → gera PNG do design no browser
-  → POST /api/create-checkout-session
-       (grava a encomenda como "pending_payment" com a imagem em base64 na própria
-        base de dados, cria uma Stripe Checkout Session)
-  → cliente paga na página da Stripe (pode aplicar um cupão de desconto)
+Cliente adiciona 1+ designs ao carrinho → cada item gera o seu PNG no browser
+  → POST /api/create-checkout-session com a lista de itens
+       (grava o pedido "pai" (orders) + uma linha por item (order_items), cada uma com a
+        sua imagem em base64, cria uma Stripe Checkout Session com um line_item por item)
+  → cliente paga na página da Stripe (pode aplicar um cupão de desconto, incluindo um
+    código de referência partilhado por outro cliente)
   → Stripe chama /api/stripe-webhook (checkout.session.completed)
-       (marca a encomenda como "paid", chama a Gelato Order API — que descarrega a
-        imagem via /api/order-image?id=<id> — marca "sent_to_print" e envia o
-        e-mail de confirmação via Resend, se configurada)
+       (marca o pedido como "paid", chama a Gelato Order API uma vez por item — cada uma
+        descarrega a sua imagem via /api/order-image?item=<id> — marca "sent_to_print",
+        gera um código de referência único para este cliente e envia o e-mail de
+        confirmação via Resend, se configurada)
   → pedido-confirmado.html faz polling a /api/order-status até mostrar o estado final
   → o cliente pode depois consultar tudo em minhas-encomendas.html pelo e-mail
 ```
 
-A imagem fica guardada como base64 na coluna `image_data` da tabela `orders` (não precisa de
-um bucket de Storage à parte) e é servida publicamente por `/api/order-image?id=<id>`, que é a
-URL que a Gelato usa para descarregar o ficheiro.
+Cada imagem fica guardada como base64 (coluna `image_data` de `order_items`, ou de `orders`
+para o primeiro item — não precisa de um bucket de Storage à parte) e é servida publicamente
+por `/api/order-image?item=<id>` (ou `?id=<id>` para o pedido inteiro), que é a URL que a
+Gelato usa para descarregar o ficheiro.
 
 ### Pôr a funcionar
 
@@ -119,7 +147,10 @@ mais simples (tudo com plano gratuito para começar):
    validar o fluxo), [Supabase](https://supabase.com), [Gelato](https://dashboard.gelato.com)
    e, opcionalmente, [Resend](https://resend.com) (e-mail de confirmação).
 2. **Supabase**: cria um projeto e corre `supabase/schema.sql` no SQL Editor (não precisa de
-   nenhum bucket de Storage — a imagem fica na própria tabela `orders`).
+   nenhum bucket de Storage — a imagem fica nas próprias tabelas `orders`/`order_items`). Se
+   já tinhas a tabela `orders` de uma versão anterior, corre também as migrações comentadas no
+   topo do ficheiro (`alter table orders add column if not exists item_count ...` e
+   `referral_code ...`) e a criação da tabela `order_items`.
 3. **Gelato**: confirma o `productUid` exato de cada formato que queres vender (cartão e/ou
    flyer) — usa a tua API key da Gelato para chamar
    `GET https://product.gelatoapis.com/v3/products:search` (filtra por "business card" /
@@ -135,6 +166,9 @@ mais simples (tudo com plano gratuito para começar):
    testar; para produção, verifica o teu domínio na Resend e atualiza `EMAIL_FROM`.
 7. **Painel de administração**: define `ADMIN_PASSWORD` com uma palavra-passe só tua — sem
    isto, `/admin.html` fica desativado (o endpoint responde 503).
+7b. **Códigos de referência** (opcional): cria um cupão em Stripe Dashboard → Product catalog
+   → Coupons (ex: 10% de desconto) e define `REFERRAL_COUPON_ID` com o ID desse cupão. Sem
+   isto, o site funciona na mesma, só não gera códigos de referência depois do pagamento.
 8. **Deploy**: importa este repositório na [Vercel](https://vercel.com) (deteta o `/api`
    automaticamente como funções serverless e serve o resto como site estático), copia
    `.env.example` para as variáveis de ambiente do projeto na Vercel com os valores reais.
@@ -155,6 +189,15 @@ mais simples (tudo com plano gratuito para começar):
 - **Partilha direta** (`navigator.share`) só funciona em navegadores/dispositivos com suporte
   a Web Share API com ficheiros (maioria dos telemóveis modernos); no desktop ou em
   navegadores sem suporte, cai automaticamente para download da imagem.
+- **Cartão Digital (QR/vCard)**: os dados guardados no QR são exatamente os campos preenchidos
+  no editor (nome, cargo, empresa, telefone, e-mail, site, endereço, slogan) — não há validação
+  de formato desses campos além da que já existe no editor.
+- **Multi-idioma cobre só o chrome estático** (menus, botões, títulos fixos) — os nomes dos
+  modelos/segmentos e o conteúdo que o utilizador escreve continuam em português.
+- **PWA funciona offline só para a "casca" da app** (HTML/CSS/JS já visitados) — qualquer
+  chamada a `/api/*` (checkout, encomendas, depoimentos, etc.) continua a precisar de internet,
+  de propósito: nunca faz sentido responder a um pagamento ou consulta de encomenda com dados
+  em cache.
 - **Publicação automática no Instagram não está incluída** — a API oficial da Meta exige
   revisão de app e uma conta Instagram Business ligada; a partilha via `navigator.share` abre
   o menu nativo de partilha do dispositivo (o Instagram aparece lá como uma das opções, mas a
