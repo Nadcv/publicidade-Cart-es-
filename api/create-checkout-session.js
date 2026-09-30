@@ -1,7 +1,7 @@
 var Stripe = require("stripe");
 var { getSupabaseAdmin } = require("../lib/supabase");
 var { priceForQuantity, getAllowedQuantities } = require("../lib/price");
-var { isAllowedFormat, isDigitalOnly } = require("../lib/formats");
+var { isAllowedFormat, isDigitalOnly, needsImage } = require("../lib/formats");
 
 var ALWAYS_REQUIRED_FIELDS = ["firstName", "lastName", "email"];
 var PHYSICAL_ONLY_FIELDS = ["addressLine1", "city", "postCode", "country"];
@@ -23,13 +23,18 @@ function validateItem(raw, index) {
     );
   }
 
-  if (!imageBase64 || typeof imageBase64 !== "string" || !imageBase64.startsWith("data:image/")) {
-    throw new Error("Item " + (index + 1) + ": imagem do cartão em falta ou inválida.");
-  }
-  var base64Data = imageBase64.split(",")[1];
-  var buffer = Buffer.from(base64Data, "base64");
-  if (buffer.length > 8 * 1024 * 1024) {
-    throw new Error("Item " + (index + 1) + ": imagem demasiado grande (máx. 8MB).");
+  // Alguns formatos (ex: "nfc") não têm nenhuma arte impressa — só levam os dados de
+  // contacto (fields), por isso não exigimos imagem nesse caso.
+  var base64Data = null;
+  if (needsImage(format)) {
+    if (!imageBase64 || typeof imageBase64 !== "string" || !imageBase64.startsWith("data:image/")) {
+      throw new Error("Item " + (index + 1) + ": imagem do cartão em falta ou inválida.");
+    }
+    base64Data = imageBase64.split(",")[1];
+    var buffer = Buffer.from(base64Data, "base64");
+    if (buffer.length > 8 * 1024 * 1024) {
+      throw new Error("Item " + (index + 1) + ": imagem demasiado grande (máx. 8MB).");
+    }
   }
 
   return { templateId: templateId, format: format, quantity: quantity, fields: fields, base64Data: base64Data, amountCents: amountCents };
@@ -110,9 +115,12 @@ module.exports = async function handler(req, res) {
     if (insertResult.error) throw insertResult.error;
     var order = insertResult.data;
 
-    // 2. A URL pública da imagem do item principal é o nosso próprio endpoint.
-    var imageUrl = siteUrl + "/api/order-image?id=" + order.id;
-    await supabase.from("orders").update({ image_url: imageUrl }).eq("id", order.id);
+    // 2. A URL pública da imagem do item principal é o nosso próprio endpoint
+    //    (só faz sentido se esse item tiver mesmo uma imagem — ver needsImage()).
+    if (first.base64Data) {
+      var imageUrl = siteUrl + "/api/order-image?id=" + order.id;
+      await supabase.from("orders").update({ image_url: imageUrl }).eq("id", order.id);
+    }
 
     // 3. Cria uma linha em order_items por item do carrinho (incluindo o primeiro, para
     //    que order_items seja sempre a lista completa e autoritativa dos itens).
@@ -130,12 +138,14 @@ module.exports = async function handler(req, res) {
     var itemsInsertResult = await supabase.from("order_items").insert(itemRows).select();
     if (itemsInsertResult.error) throw itemsInsertResult.error;
 
-    var itemUrlUpdates = itemsInsertResult.data.map(function (row) {
-      return supabase
-        .from("order_items")
-        .update({ image_url: siteUrl + "/api/order-image?item=" + row.id })
-        .eq("id", row.id);
-    });
+    var itemUrlUpdates = itemsInsertResult.data
+      .filter(function (row) { return row.image_data; })
+      .map(function (row) {
+        return supabase
+          .from("order_items")
+          .update({ image_url: siteUrl + "/api/order-image?item=" + row.id })
+          .eq("id", row.id);
+      });
     await Promise.all(itemUrlUpdates);
 
     // 4. Cria a sessão de pagamento Stripe, um line_item por item do carrinho.
@@ -143,7 +153,8 @@ module.exports = async function handler(req, res) {
       card: "Cartões de visita impressos",
       flyer: "Flyers A5 impressos",
       convite: "Convites impressos",
-      "convite-digital": "Convite digital (entrega por e-mail)"
+      "convite-digital": "Convite digital (entrega por e-mail)",
+      nfc: "Chip NFC com cartão digital"
     };
     var lineItems = items.map(function (it) {
       var productName = (FORMAT_PRODUCT_NAME[it.format] || "Impressos") +

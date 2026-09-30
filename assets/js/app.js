@@ -212,7 +212,8 @@
     { id: "story", label: "Story", type: "ad", printable: false },
     { id: "flyer", label: "Flyer A5", type: "ad", printable: true, printQuantities: [50, 100, 250] },
     { id: "convite", label: "Convite (Impresso)", type: "ad", printable: true, printQuantities: [5, 10, 20, 50, 100] },
-    { id: "convite-digital", label: "Convite Digital", type: "ad", printable: true, printQuantities: [1], digitalOnly: true }
+    { id: "convite-digital", label: "Convite Digital", type: "ad", printable: true, printQuantities: [1], digitalOnly: true },
+    { id: "nfc", label: "Chip NFC", type: "nfc", printable: true, printQuantities: [1, 2, 5], unitLabel: "chip", noImage: true }
   ];
 
   // Formatos entregues só por e-mail (sem impressão, sem morada de envio) — tem de bater
@@ -575,6 +576,23 @@
       "</div></div>";
   }
 
+  function buildNfcPreview(f) {
+    var rows = [
+      ["phone", f.telefone], ["mail", f.email], ["instagram", f.instagram], ["pin", f.endereco]
+    ].filter(function (r) { return r[1]; }).map(function (r) {
+      return '<div class="nfc-row"><span class="icon-wrap">' + iconSVG(r[0]) + "</span><span>" + escapeHtml(r[1]) + "</span></div>";
+    }).join("");
+
+    return (
+      '<div class="nfc-preview">' +
+      '<span class="icon-wrap nfc-icon">' + iconSVG("bolt") + "</span>" +
+      '<strong>' + escapeHtml(f.nome || f.empresa || "O teu Cartão Digital") + "</strong>" +
+      '<p class="hint">Gravado num chip NFC — quem encostar o telemóvel vê isto e guarda o contacto na hora.</p>' +
+      (rows ? '<div class="nfc-rows">' + rows + "</div>" : "") +
+      "</div>"
+    );
+  }
+
   /* ---------------------------------------------------------
      Render principal do board
      --------------------------------------------------------- */
@@ -605,6 +623,8 @@
         el.classList.toggle("active", (isFront && state.side === "front") || (!isFront && state.side === "back"));
       });
       if (state.includeQr) renderQrInto(board.querySelector(".cb-qr"), buildVCard(f), 92);
+    } else if (format.type === "nfc") {
+      board.innerHTML = buildNfcPreview(f);
     } else {
       board.innerHTML = buildAdBoard(tpl, colors, f);
     }
@@ -1028,7 +1048,7 @@
     if (!format.printable) { sel.innerHTML = ""; return; }
     sel.innerHTML = format.printQuantities.map(function (q) {
       var cents = priceFor(format.id, q);
-      var label = format.digitalOnly ? "Convite digital" : q + " unidades";
+      var label = format.digitalOnly ? "Convite digital" : q + " " + (format.unitLabel ? format.unitLabel + (q > 1 ? "s" : "") : "unidades");
       return '<option value="' + q + '">' + label + (cents != null ? " — " + formatMoney(cents) : "") + "</option>";
     }).join("");
   }
@@ -1069,28 +1089,36 @@
     var qty = parseInt($("#add-qty").value, 10);
     if (!qty) return;
 
+    function pushCartItem(imageBase64) {
+      var tpl = getTemplate(state.templateId);
+      state.cart.push({
+        id: uid(),
+        templateId: state.templateId,
+        templateName: tpl.name,
+        formatId: state.formatId,
+        formatLabel: format.label,
+        fields: Object.assign({}, state.fields),
+        colorOverride: Object.assign({}, state.colorOverride),
+        logo: state.logo,
+        includeQr: state.includeQr,
+        quantity: qty,
+        amountCents: priceFor(format.id, qty),
+        imageBase64: imageBase64
+      });
+      persistCart();
+      updateCartBadge();
+      flashStatus("Adicionado ao carrinho.");
+    }
+
+    // Formatos sem arte impressa (ex: "nfc") não precisam de capturar o board em PNG.
+    if (format.noImage) {
+      pushCartItem(null);
+      return;
+    }
+
     flashStatus("A adicionar ao carrinho...");
     boardToPngBase64()
-      .then(function (imageBase64) {
-        var tpl = getTemplate(state.templateId);
-        state.cart.push({
-          id: uid(),
-          templateId: state.templateId,
-          templateName: tpl.name,
-          formatId: state.formatId,
-          formatLabel: format.label,
-          fields: Object.assign({}, state.fields),
-          colorOverride: Object.assign({}, state.colorOverride),
-          logo: state.logo,
-          includeQr: state.includeQr,
-          quantity: qty,
-          amountCents: priceFor(format.id, qty),
-          imageBase64: imageBase64
-        });
-        persistCart();
-        updateCartBadge();
-        flashStatus("Adicionado ao carrinho.");
-      })
+      .then(pushCartItem)
       .catch(function () {
         flashStatus("Não foi possível preparar a arte para o carrinho.");
       });

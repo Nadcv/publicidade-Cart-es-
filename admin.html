@@ -17,6 +17,7 @@
   .status-paid { background: #1e3a2e; color: #4cd97b; }
   .status-sent_to_print { background: #1e2f3a; color: #4ab0e0; }
   .status-delivered { background: #2a1e3a; color: #b084e0; }
+  .status-manual_pending { background: #3a2a1e; color: #e0a04a; }
   .status-failed { background: #3a1e1e; color: #e05a5a; }
   .status-canceled { background: #2a2a2a; color: #999; }
   .stat-row { display: flex; gap: 14px; flex-wrap: wrap; margin: 18px 0; }
@@ -58,7 +59,7 @@
           <thead>
             <tr>
               <th>Data</th><th>Estado</th><th>Formato</th><th>Qtd</th><th>Itens</th><th>Total</th>
-              <th>Cliente</th><th>E-mail</th><th>Cidade/País</th><th>Ref.</th>
+              <th>Cliente</th><th>E-mail</th><th>Cidade/País</th><th>Ref.</th><th>Ação</th>
             </tr>
           </thead>
           <tbody id="orders-tbody"></tbody>
@@ -117,10 +118,11 @@
     paid: "Pago",
     sent_to_print: "Na impressão",
     delivered: "Entregue (digital)",
+    manual_pending: "Aguarda chip NFC",
     failed: "Falhou",
     canceled: "Cancelado"
   };
-  var FORMAT_LABEL = { card: "Cartão", flyer: "Flyer A5", convite: "Convite", "convite-digital": "Convite Digital" };
+  var FORMAT_LABEL = { card: "Cartão", flyer: "Flyer A5", convite: "Convite", "convite-digital": "Convite Digital", nfc: "Chip NFC" };
   var STORAGE_KEY = "uniads_admin_password";
   var state = { page: 1, total: 0, pageSize: 50 };
 
@@ -149,6 +151,10 @@
       var date = new Date(o.created_at).toLocaleDateString("pt-PT");
       var addr = o.shipping_address || {};
       var cityCountry = [addr.city, addr.country].filter(Boolean).join(" / ");
+      var needsNfcLink = o.product_format === "nfc" || o.status === "manual_pending";
+      var actionCell = needsNfcLink
+        ? '<button type="button" class="btn btn-ghost btn-sm" data-copy-link="' + escapeHtml(o.id) + '">🔗 Copiar link</button>'
+        : "";
       return (
         "<tr>" +
         "<td>" + date + "</td>" +
@@ -161,9 +167,22 @@
         "<td>" + escapeHtml(o.contact_email) + "</td>" +
         "<td>" + escapeHtml(cityCountry) + "</td>" +
         '<td style="font-size:.68rem;opacity:.7;">' + escapeHtml(o.id.slice(0, 8)) + "</td>" +
+        "<td>" + actionCell + "</td>" +
         "</tr>"
       );
     }).join("");
+
+    tbody.querySelectorAll("[data-copy-link]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var url = window.location.origin + "/cartao-digital.html?order=" + btn.getAttribute("data-copy-link");
+        var done = function () { btn.textContent = "✅ Copiado"; window.setTimeout(function () { btn.textContent = "🔗 Copiar link"; }, 2000); };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(url).then(done).catch(function () { window.prompt("Copia este link:", url); });
+        } else {
+          window.prompt("Copia este link:", url);
+        }
+      });
+    });
   }
 
   function renderSummary(summary) {

@@ -8,13 +8,15 @@ create table if not exists orders (
 
   -- 'delivered': pedido 100% digital (convite-digital), entregue por e-mail, sem
   -- passar pela Gelato nem precisar de morada de envio.
+  -- 'manual_pending': pedido com produto físico preparado à mão (ex: chip NFC),
+  -- pago mas ainda por gravar/enviar manualmente pelo dono do site.
   status text not null default 'pending_payment'
-    check (status in ('pending_payment', 'paid', 'sent_to_print', 'delivered', 'failed', 'canceled')),
+    check (status in ('pending_payment', 'paid', 'sent_to_print', 'delivered', 'manual_pending', 'failed', 'canceled')),
 
   -- dados do design (para reimpressão/consulta, não é a fonte de verdade do preço)
   template_id text not null,
   product_format text not null default 'card'
-    check (product_format in ('card', 'flyer', 'convite', 'convite-digital')),
+    check (product_format in ('card', 'flyer', 'convite', 'convite-digital', 'nfc')),
   quantity integer not null,
   fields jsonb not null default '{}'::jsonb,
 
@@ -59,16 +61,17 @@ create index if not exists orders_status_idx on orders (status);
 -- alter table orders add column if not exists referral_code text;
 
 -- Migração para quem já tinha a tabela orders antes dos formatos "convite" /
--- "convite-digital" e do estado "delivered" existirem (widening dos checks):
+-- "convite-digital" / "nfc" e dos estados "delivered" / "manual_pending" existirem
+-- (widening dos checks) — corre sempre a versão mais recente destes dois blocos:
 -- alter table orders drop constraint if exists orders_product_format_check;
 -- alter table orders add constraint orders_product_format_check
---   check (product_format in ('card', 'flyer', 'convite', 'convite-digital'));
+--   check (product_format in ('card', 'flyer', 'convite', 'convite-digital', 'nfc'));
 -- alter table orders drop constraint if exists orders_status_check;
 -- alter table orders add constraint orders_status_check
---   check (status in ('pending_payment', 'paid', 'sent_to_print', 'delivered', 'failed', 'canceled'));
+--   check (status in ('pending_payment', 'paid', 'sent_to_print', 'delivered', 'manual_pending', 'failed', 'canceled'));
 -- alter table order_items drop constraint if exists order_items_product_format_check;
 -- alter table order_items add constraint order_items_product_format_check
---   check (product_format in ('card', 'flyer', 'convite', 'convite-digital'));
+--   check (product_format in ('card', 'flyer', 'convite', 'convite-digital', 'nfc'));
 
 -- Itens individuais de um pedido (carrinho com vários designs/formatos numa só compra).
 -- A primeira linha de order_items de cada pedido espelha os campos "planos" que já
@@ -81,10 +84,11 @@ create table if not exists order_items (
 
   template_id text not null,
   product_format text not null default 'card'
-    check (product_format in ('card', 'flyer', 'convite', 'convite-digital')),
+    check (product_format in ('card', 'flyer', 'convite', 'convite-digital', 'nfc')),
   quantity integer not null,
   fields jsonb not null default '{}'::jsonb,
 
+  -- nulo para formatos sem arte impressa (ex: "nfc" — ver needsImage() em lib/formats.js)
   image_data text,
   image_url text,
 

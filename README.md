@@ -20,11 +20,11 @@ Abra `http://localhost:8080`. Não precisa de `npm install`: é HTML/CSS/JS puro
   `Eventos & Festas`, `Saúde & Bem-estar`, `Automotivo`, `Educação`, `Moda`,
   `Corporativo & Advocacia`, `Pet Shops & Veterinária`, `Fitness & Academias`) traz 2 modelos
   com paleta, layout e ícone próprios.
-- **6 formatos**: Cartão de Visita (frente/verso), Post Instagram, Story, Flyer A5, Convite
-  (impresso, em tiragens pequenas — 5/10/20/50/100 unidades, ideal para casamentos e festas) e
-  Convite Digital (entregue só por e-mail, sem impressão nem morada) — a mesma identidade visual
-  do modelo se adapta a cada formato, e o campo "Endereço/Cidade" passa a mostrar a localização
-  do evento na própria arte (post, story, flyer e convites).
+- **7 formatos**: Cartão de Visita (frente/verso), Post Instagram, Story, Flyer A5, Convite
+  (impresso, em tiragens pequenas — 5/10/20/50/100 unidades, ideal para casamentos e festas),
+  Convite Digital (entregue só por e-mail, sem impressão nem morada) e Chip NFC (ver abaixo) — a
+  mesma identidade visual do modelo se adapta a cada formato, e o campo "Endereço/Cidade" passa
+  a mostrar a localização do evento na própria arte (post, story, flyer e convites).
 - **Editor ao vivo**: nome, cargo, empresa, slogan, telefone, e-mail, site, rede social e
   endereço atualizam a pré-visualização em tempo real; logotipo por upload (substitui o ícone
   do segmento) e cores primária/secundária personalizáveis por cima da paleta do modelo.
@@ -32,6 +32,11 @@ Abra `http://localhost:8080`. Não precisa de `npm install`: é HTML/CSS/JS puro
   ligada por omissão) que, ao ser lido, guarda o contacto diretamente no telemóvel de quem
   recebe o cartão físico. Há também um botão "Ver Cartão Digital" com um QR maior e download
   direto do ficheiro `.vcf`, disponível para qualquer formato.
+- **Chip NFC**: um chip físico (cartão, autocolante ou porta-chaves) gravado com o link do
+  Cartão Digital do cliente — quem encostar o telemóvel ao chip vê logo os contactos (nome,
+  WhatsApp, redes sociais, morada) e pode guardá-los com um toque, sem abrir câmara nem apps.
+  É um produto **físico** (precisa de morada de envio) mas **não passa pela Gelato**: é
+  preparado à mão pelo dono do site — ver a secção "Chip NFC" mais abaixo para o processo.
 - **Exportar**: PNG em alta resolução ou **PDF no tamanho exato de impressão** (via
   `html2canvas` + `jsPDF`, carregados por CDN — precisam de internet), impressão direta do
   navegador, ou **partilhar** direto para outra app (Instagram, WhatsApp, etc.) via Web Share
@@ -62,6 +67,8 @@ Abra `http://localhost:8080`. Não precisa de `npm install`: é HTML/CSS/JS puro
 index.html                Estrutura da página (hero, categorias, editor, projetos, checkout)
 pedido-confirmado.html    Página de retorno do Stripe Checkout (consulta /api/order-status)
 minhas-encomendas.html    Cliente consulta as suas encomendas pelo e-mail
+cartao-digital.html       Cartão Digital público (o que um chip NFC ou QR code abre): nome,
+                          WhatsApp, redes sociais, morada e um botão para guardar o contacto
 admin.html                Painel de administração (protegido por ADMIN_PASSWORD)
 manifest.json / sw.js     App instalável (PWA): manifest + service worker (cache dos estáticos,
                           nunca de /api/*)
@@ -90,6 +97,8 @@ api/                      Funções serverless (tem de ficar na raiz — é a pa
   order-status.js             Consulta o estado de uma encomenda (usado por pedido-confirmado.html)
   order-image.js              Serve a arte de impressão de uma encomenda ou de um item do carrinho
                               (lida da base de dados) — é esta URL que a Gelato descarrega
+  digital-card.js              Devolve os dados de contacto (não sensíveis) de um pedido, para
+                              cartao-digital.html mostrar — usado pelos chips NFC e por QR codes
   my-orders.js                Lista as encomendas de um e-mail (usado por minhas-encomendas.html)
   testimonials.js             Lista pública dos depoimentos aprovados
   admin/orders.js              Lista todas as encomendas, paginado (usado por admin.html)
@@ -193,6 +202,31 @@ mais simples (tudo com plano gratuito para começar):
    `https://<o-teu-domínio>/api/stripe-webhook`, subscrito ao evento `checkout.session.completed`,
    e copia o "Signing secret" para `STRIPE_WEBHOOK_SECRET`.
 
+### Chip NFC: o processo (manual, de propósito)
+
+O formato "Chip NFC" é diferente de todos os outros: não há nenhum fornecedor tipo Gelato que
+grave chips NFC automaticamente, por isso este é um **piloto com fulfillment manual** — o
+software está todo pronto, mas o passo de gravar e enviar o chip físico és tu que fazes:
+
+1. **Compra chips NFC em branco** (cartões, autocolantes ou porta-chaves NFC — procura "NFC tag
+   NTAG213" ou similar, vendem-se baratos online em lotes de 10-50).
+2. Quando alguém compra um "Chip NFC", o pedido aparece em `/admin.html` com o estado
+   **"Aguarda chip NFC"** e um botão **"🔗 Copiar link"** — copia esse link (algo como
+   `https://o-teu-site.vercel.app/cartao-digital.html?order=<id>`).
+3. **Grava esse link no chip**, usando uma app como "NFC Tools" (Android/iOS) — é escrever um
+   registo NDEF do tipo "URL" com esse endereço. O chip nunca guarda os dados do cliente
+   diretamente, só o link — por isso não há limite de tamanho nem preocupação com o que cabe
+   no chip.
+4. Testa (encosta o teu telemóvel ao chip e confirma que abre a página certa, com o nome/
+   contactos corretos) e envia o chip pelo correio normal para a morada do pedido.
+5. Não há nenhum botão para marcar "enviado" — isso é só para tua organização (ex: marcar numa
+   folha de cálculo à parte, ou simplesmente tratar cada pedido "Aguarda chip NFC" assim que
+   aparecer).
+
+A página `/cartao-digital.html?order=<id>` funciona também com QR code (o link é o mesmo) e é
+pública — qualquer pessoa com o link vê o cartão, mas o id do pedido é um UUID impossível de
+adivinhar, o mesmo modelo de confiança já usado por `/api/order-image`.
+
 ### Limitações
 
 - Preços e os `productUid` da Gelato em `.env.example` são **placeholders**, não valores
@@ -211,10 +245,14 @@ mais simples (tudo com plano gratuito para começar):
   de formato desses campos além da que já existe no editor.
 - **Multi-idioma cobre só o chrome estático** (menus, botões, títulos fixos) — os nomes dos
   modelos/segmentos e o conteúdo que o utilizador escreve continuam em português.
-- **PWA funciona offline só para a "casca" da app** (HTML/CSS/JS já visitados) — qualquer
-  chamada a `/api/*` (checkout, encomendas, depoimentos, etc.) continua a precisar de internet,
-  de propósito: nunca faz sentido responder a um pagamento ou consulta de encomenda com dados
-  em cache.
+- **PWA usa estratégia "rede primeiro"**: tenta sempre ir buscar a versão mais recente do site
+  à internet (para nunca mostrar conteúdo desatualizado depois de um deploy); só usa a cópia
+  em cache como último recurso, se a pessoa estiver mesmo offline. `/api/*` nunca é interceto
+  pelo service worker — pagamentos e consultas de encomendas são sempre em direto.
+- **Vercel Hobby (grátis) só permite 12 Serverless Functions por deployment** — cada ficheiro
+  `.js` dentro de `api/` conta como uma (o código partilhado vive em `lib/`, fora de `api/`,
+  para não contar). Atualmente há 10; ao adicionar novos endpoints fica pouco espaço de
+  manobra antes de precisares do plano Pro ou de agrupar rotas no mesmo ficheiro.
 - **Publicação automática no Instagram não está incluída** — a API oficial da Meta exige
   revisão de app e uma conta Instagram Business ligada; a partilha via `navigator.share` abre
   o menu nativo de partilha do dispositivo (o Instagram aparece lá como uma das opções, mas a

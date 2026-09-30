@@ -3,7 +3,7 @@ var { getSupabaseAdmin } = require("../lib/supabase");
 var { createGelatoOrder } = require("../lib/gelato");
 var { sendEmail, orderConfirmationHtml } = require("../lib/email");
 var { createReferralCode } = require("../lib/referral");
-var { isDigitalOnly } = require("../lib/formats");
+var { isDigitalOnly, isManualFulfillment } = require("../lib/formats");
 
 function readRawBody(req) {
   return new Promise(function (resolve, reject) {
@@ -82,6 +82,7 @@ module.exports = async function handler(req, res) {
     var firstGelatoId = null;
     var digitalDeliveries = [];
     var hasPhysicalItem = false;
+    var hasManualItem = false;
 
     for (var i = 0; i < lineItems.length; i++) {
       var item = lineItems[i];
@@ -90,6 +91,14 @@ module.exports = async function handler(req, res) {
       // ficheiro já hospedado em /api/order-image?item=<id>.
       if (isDigitalOnly(item.product_format)) {
         digitalDeliveries.push({ templateId: item.template_id, downloadUrl: item.image_url });
+        continue;
+      }
+
+      // "nfc" (chip NFC) também não passa pela Gelato — é um produto físico preparado
+      // à mão pelo dono do site (grava-se o link de /api/digital-card?order=<id> no
+      // chip e envia-se por correio normal, fora deste fluxo automático).
+      if (isManualFulfillment(item.product_format)) {
+        hasManualItem = true;
         continue;
       }
 
@@ -134,18 +143,19 @@ module.exports = async function handler(req, res) {
     }
 
     var referralCode = await createReferralCode(stripe, order.id);
+    var finalStatus = hasPhysicalItem ? "sent_to_print" : (hasManualItem ? "manual_pending" : "delivered");
 
     await supabase
       .from("orders")
       .update({
-        status: hasPhysicalItem ? "sent_to_print" : "delivered",
+        status: finalStatus,
         gelato_order_id: firstGelatoId,
         referral_code: referralCode,
         updated_at: new Date().toISOString()
       })
       .eq("id", orderId);
     order.referral_code = referralCode;
-    order.status = hasPhysicalItem ? "sent_to_print" : "delivered";
+    order.status = finalStatus;
 
     // E-mail de confirmação é best-effort: uma falha aqui não deve marcar a encomenda
     // como falhada, já foi paga (e enviada para impressão e/ou entregue por e-mail) com sucesso.

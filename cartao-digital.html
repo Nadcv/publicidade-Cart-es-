@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<title>Cartão Digital — UniAds Studio</title>
+<script>try{document.documentElement.setAttribute("data-theme",localStorage.getItem("uniads_theme")==="light"?"light":"dark")}catch(e){}</script>
+<link rel="stylesheet" href="assets/css/style.css" />
+<style>
+  .dc-wrap { max-width: 420px; margin: 0 auto; text-align: center; }
+  .dc-name { font-size: 1.5rem; font-weight: 800; margin: 4px 0 0; }
+  .dc-cargo { color: var(--text-soft); font-size: .9rem; margin: 2px 0 0; }
+  .dc-empresa { font-weight: 700; margin: 10px 0 0; }
+  .dc-slogan { font-style: italic; color: var(--text-soft); font-size: .85rem; margin: 4px 0 0; }
+  .dc-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 22px; }
+  .dc-actions a, .dc-actions button { width: 100%; }
+  .dc-footer-note { margin-top: 24px; font-size: .72rem; color: var(--text-soft); }
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="site-header">
+    <div class="brand">
+      <a href="index.html" style="text-decoration:none;color:inherit;">
+        <span class="brand-mark">Uni<b>Ads</b></span>
+        <span class="brand-sub">Studio</span>
+      </a>
+    </div>
+  </header>
+
+  <section class="section is-active" style="max-width:480px;">
+    <div id="dc-box" class="editor-panel dc-wrap">
+      <p>A carregar cartão...</p>
+    </div>
+    <p class="dc-footer-note">Cartão digital criado com <a href="index.html" style="color:var(--accent);">UniAds Studio</a></p>
+  </section>
+</div>
+
+<script>
+(function () {
+  function escapeHtml(str) {
+    return String(str == null ? "" : str).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
+  function vcardEscape(s) {
+    return String(s == null ? "" : s).replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\n/g, "\\n");
+  }
+
+  function buildVCard(f) {
+    var url = f.site ? (/^https?:\/\//i.test(f.site) ? f.site : "http://" + f.site) : "";
+    var lines = [
+      "BEGIN:VCARD",
+      "VERSION:3.0",
+      "N:;" + vcardEscape(f.nome) + ";;;",
+      "FN:" + vcardEscape(f.nome || "Contacto"),
+      f.empresa ? "ORG:" + vcardEscape(f.empresa) : "",
+      f.cargo ? "TITLE:" + vcardEscape(f.cargo) : "",
+      f.telefone ? "TEL;TYPE=CELL:" + vcardEscape(f.telefone) : "",
+      f.email ? "EMAIL:" + vcardEscape(f.email) : "",
+      url ? "URL:" + vcardEscape(url) : "",
+      f.endereco ? "ADR;TYPE=WORK:;;" + vcardEscape(f.endereco) + ";;;;" : "",
+      f.slogan ? "NOTE:" + vcardEscape(f.slogan) : "",
+      "END:VCARD"
+    ].filter(Boolean);
+    return lines.join("\n");
+  }
+
+  function waLink(phone) {
+    var digits = String(phone || "").replace(/[^0-9]/g, "");
+    return digits ? "https://wa.me/" + digits : "";
+  }
+
+  var params = new URLSearchParams(window.location.search);
+  var orderId = params.get("order");
+  var box = document.getElementById("dc-box");
+
+  if (!orderId) {
+    box.innerHTML = "<p>Cartão não encontrado — falta o parâmetro na ligação.</p>";
+    return;
+  }
+
+  fetch("/api/digital-card?order=" + encodeURIComponent(orderId))
+    .then(function (r) { return r.json().then(function (data) { return { ok: r.ok, data: data }; }); })
+    .then(function (result) {
+      if (!result.ok) throw new Error(result.data.error || "Cartão não encontrado.");
+      var f = result.data;
+      document.title = (f.nome || "Cartão Digital") + " — UniAds Studio";
+
+      var actions = [];
+      if (f.telefone) {
+        actions.push('<a href="tel:' + escapeHtml(f.telefone) + '" class="btn btn-secondary">📞 Ligar</a>');
+        var wa = waLink(f.telefone);
+        if (wa) actions.push('<a href="' + wa + '" class="btn btn-secondary" target="_blank" rel="noopener">💬 WhatsApp</a>');
+      }
+      if (f.email) actions.push('<a href="mailto:' + escapeHtml(f.email) + '" class="btn btn-secondary">✉️ E-mail</a>');
+      if (f.site) {
+        var siteUrl = /^https?:\/\//i.test(f.site) ? f.site : "http://" + f.site;
+        actions.push('<a href="' + siteUrl + '" class="btn btn-secondary" target="_blank" rel="noopener">🌐 Site</a>');
+      }
+      if (f.instagram) {
+        var handle = f.instagram.replace(/^@/, "");
+        actions.push('<a href="https://instagram.com/' + encodeURIComponent(handle) + '" class="btn btn-secondary" target="_blank" rel="noopener">📷 Instagram</a>');
+      }
+      if (f.endereco) {
+        actions.push('<a href="https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(f.endereco) + '" class="btn btn-secondary" target="_blank" rel="noopener">📍 Ver morada</a>');
+      }
+      actions.push('<button type="button" id="dc-save" class="btn btn-primary btn-lg">💾 Guardar Contacto</button>');
+
+      box.innerHTML =
+        (f.nome ? '<p class="dc-name">' + escapeHtml(f.nome) + "</p>" : "") +
+        (f.cargo ? '<p class="dc-cargo">' + escapeHtml(f.cargo) + "</p>" : "") +
+        (f.empresa ? '<p class="dc-empresa">' + escapeHtml(f.empresa) + "</p>" : "") +
+        (f.slogan ? '<p class="dc-slogan">"' + escapeHtml(f.slogan) + '"</p>' : "") +
+        '<div class="dc-actions">' + actions.join("") + "</div>";
+
+      var saveBtn = document.getElementById("dc-save");
+      if (saveBtn) {
+        saveBtn.addEventListener("click", function () {
+          var blob = new Blob([buildVCard(f)], { type: "text/vcard" });
+          var link = document.createElement("a");
+          link.download = (f.nome || "contacto").toLowerCase().replace(/[^a-z0-9]+/g, "-") + ".vcf";
+          link.href = URL.createObjectURL(blob);
+          link.click();
+          window.setTimeout(function () { URL.revokeObjectURL(link.href); }, 4000);
+        });
+      }
+    })
+    .catch(function (err) {
+      box.innerHTML = "<p>" + escapeHtml(err.message || "Não foi possível carregar o cartão.") + "</p>";
+    });
+})();
+</script>
+</body>
+</html>
