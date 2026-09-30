@@ -1,14 +1,15 @@
 var Stripe = require("stripe");
 var { getSupabaseAdmin } = require("./lib/supabase");
 var { priceForQuantity, getAllowedQuantities } = require("./lib/price");
+var { isAllowedFormat, isDigitalOnly } = require("./lib/formats");
 
-var REQUIRED_SHIPPING_FIELDS = ["firstName", "lastName", "addressLine1", "city", "postCode", "country", "email"];
-var ALLOWED_FORMATS = ["card", "flyer"];
+var ALWAYS_REQUIRED_FIELDS = ["firstName", "lastName", "email"];
+var PHYSICAL_ONLY_FIELDS = ["addressLine1", "city", "postCode", "country"];
 var MAX_ITEMS = 10;
 
 function validateItem(raw, index) {
   var templateId = String((raw && raw.templateId) || "").slice(0, 60);
-  var format = ALLOWED_FORMATS.indexOf(raw && raw.format) !== -1 ? raw.format : "card";
+  var format = isAllowedFormat(raw && raw.format) ? raw.format : "card";
   var quantity = parseInt(raw && raw.quantity, 10);
   var fields = raw && raw.fields && typeof raw.fields === "object" ? raw.fields : {};
   var imageBase64 = raw && raw.imageBase64;
@@ -62,12 +63,21 @@ module.exports = async function handler(req, res) {
       return;
     }
 
-    for (var i = 0; i < REQUIRED_SHIPPING_FIELDS.length; i++) {
-      var key = REQUIRED_SHIPPING_FIELDS[i];
+    // Morada de envio só é obrigatória se houver pelo menos um item físico no carrinho —
+    // um pedido 100% "convite-digital" é entregue por e-mail, sem impressão nem envio.
+    var hasPhysicalItem = items.some(function (it) { return !isDigitalOnly(it.format); });
+    var requiredFields = ALWAYS_REQUIRED_FIELDS.concat(hasPhysicalItem ? PHYSICAL_ONLY_FIELDS : []);
+
+    for (var i = 0; i < requiredFields.length; i++) {
+      var key = requiredFields[i];
       if (!shipping[key] || !String(shipping[key]).trim()) {
-        res.status(400).json({ error: "Morada de envio incompleta (campo em falta: " + key + ")." });
+        res.status(400).json({ error: "Dados de contacto/envio incompletos (campo em falta: " + key + ")." });
         return;
       }
+    }
+    if (hasPhysicalItem && !/^[A-Za-z]{2}$/.test(String(shipping.country || "").trim())) {
+      res.status(400).json({ error: "Código do país deve ter 2 letras (ex: PT, BR, ES)." });
+      return;
     }
 
     var currency = (process.env.CURRENCY || "eur").toLowerCase();
@@ -129,8 +139,14 @@ module.exports = async function handler(req, res) {
     await Promise.all(itemUrlUpdates);
 
     // 4. Cria a sessão de pagamento Stripe, um line_item por item do carrinho.
+    var FORMAT_PRODUCT_NAME = {
+      card: "Cartões de visita impressos",
+      flyer: "Flyers A5 impressos",
+      convite: "Convites impressos",
+      "convite-digital": "Convite digital (entrega por e-mail)"
+    };
     var lineItems = items.map(function (it) {
-      var productName = (it.format === "flyer" ? "Flyers A5 impressos" : "Cartões de visita impressos") +
+      var productName = (FORMAT_PRODUCT_NAME[it.format] || "Impressos") +
         " (" + it.quantity + " un.) — " + it.templateId;
       return {
         quantity: 1,

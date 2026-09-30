@@ -210,8 +210,15 @@
     { id: "card", label: "Cartão de Visita", type: "card", printable: true, printQuantities: [100, 250, 500] },
     { id: "post", label: "Post Instagram", type: "ad", printable: false },
     { id: "story", label: "Story", type: "ad", printable: false },
-    { id: "flyer", label: "Flyer A5", type: "ad", printable: true, printQuantities: [50, 100, 250] }
+    { id: "flyer", label: "Flyer A5", type: "ad", printable: true, printQuantities: [50, 100, 250] },
+    { id: "convite", label: "Convite (Impresso)", type: "ad", printable: true, printQuantities: [5, 10, 20, 50, 100] },
+    { id: "convite-digital", label: "Convite Digital", type: "ad", printable: true, printQuantities: [1], digitalOnly: true }
   ];
+
+  // Formatos entregues só por e-mail (sem impressão, sem morada de envio) — tem de bater
+  // certo com DIGITAL_ONLY_FORMATS em api/lib/formats.js.
+  var DIGITAL_ONLY_FORMATS = ["convite-digital"];
+  function isDigitalOnlyFormat(formatId) { return DIGITAL_ONLY_FORMATS.indexOf(formatId) !== -1; }
 
   var FIELD_KEYS = ["nome", "cargo", "empresa", "slogan", "telefone", "email", "site", "instagram", "endereco"];
 
@@ -551,7 +558,7 @@
 
   function buildAdBoard(tpl, colors, f) {
     var footerRows = [
-      ["phone", f.telefone], ["globe", f.site], ["instagram", f.instagram]
+      ["pin", f.endereco], ["phone", f.telefone], ["globe", f.site], ["instagram", f.instagram]
     ].filter(function (r) { return r[1]; }).map(function (r) {
       return '<span class="cb-row"><span class="icon-wrap">' + iconSVG(r[0]) + "</span>" + escapeHtml(r[1]) + "</span>";
     }).join("");
@@ -848,7 +855,9 @@
     card: { w: 85, h: 55 },
     flyer: { w: 148, h: 210 },
     post: { w: 100, h: 100 },
-    story: { w: 100, h: 177.8 }
+    story: { w: 100, h: 177.8 },
+    convite: { w: 105, h: 148 },
+    "convite-digital": { w: 105, h: 148 }
   };
 
   function downloadPDF() {
@@ -1019,7 +1028,8 @@
     if (!format.printable) { sel.innerHTML = ""; return; }
     sel.innerHTML = format.printQuantities.map(function (q) {
       var cents = priceFor(format.id, q);
-      return '<option value="' + q + '">' + q + " unidades" + (cents != null ? " — " + formatMoney(cents) : "") + "</option>";
+      var label = format.digitalOnly ? "Convite digital" : q + " unidades";
+      return '<option value="' + q + '">' + label + (cents != null ? " — " + formatMoney(cents) : "") + "</option>";
     }).join("");
   }
 
@@ -1141,11 +1151,16 @@
   function renderCheckoutSummary() {
     var box = $("#checkout-summary");
     box.innerHTML = state.cart.map(function (it) {
+      var digitalTag = isDigitalOnlyFormat(it.formatId) ? " (digital)" : "";
       return (
-        '<div class="cs-row"><span>' + escapeHtml(it.templateName) + " · " + it.quantity + " un.</span><span>" +
+        '<div class="cs-row"><span>' + escapeHtml(it.templateName) + " · " + it.quantity + " un." + digitalTag + "</span><span>" +
         (it.amountCents != null ? formatMoney(it.amountCents) : "—") + "</span></div>"
       );
     }).join("") + '<div class="cs-row cs-total"><span>Total</span><span>' + formatMoney(cartTotalCents()) + "</span></div>";
+  }
+
+  function cartIsAllDigital() {
+    return state.cart.length > 0 && state.cart.every(function (it) { return isDigitalOnlyFormat(it.formatId); });
   }
 
   function openCheckoutModal() {
@@ -1156,6 +1171,14 @@
     $("#checkout-status").textContent = "";
     $("#co-email").value = "";
     renderCheckoutSummary();
+
+    var allDigital = cartIsAllDigital();
+    $("#checkout-shipping-fields").classList.toggle("hidden", allDigital);
+    $("#checkout-digital-note").classList.toggle("hidden", !allDigital);
+    ["#co-address1", "#co-city", "#co-postcode", "#co-country"].forEach(function (sel) {
+      $(sel).required = !allDigital;
+    });
+
     closeCart();
     $("#checkout-modal").classList.remove("hidden");
   }
@@ -1166,9 +1189,10 @@
     if (!state.cart.length) return;
     var submitBtn = $("#checkout-submit");
     var statusEl = $("#checkout-status");
+    var allDigital = cartIsAllDigital();
     var country = $("#co-country").value.trim().toUpperCase();
 
-    if (!/^[A-Z]{2}$/.test(country)) {
+    if (!allDigital && !/^[A-Z]{2}$/.test(country)) {
       statusEl.textContent = "Código do país deve ter 2 letras (ex: PT, BR, ES).";
       return;
     }

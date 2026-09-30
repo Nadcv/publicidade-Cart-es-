@@ -3,6 +3,7 @@ var { getSupabaseAdmin } = require("./lib/supabase");
 var { createGelatoOrder } = require("./lib/gelato");
 var { sendEmail, orderConfirmationHtml } = require("./lib/email");
 var { createReferralCode } = require("./lib/referral");
+var { isDigitalOnly } = require("./lib/formats");
 
 function readRawBody(req) {
   return new Promise(function (resolve, reject) {
@@ -79,9 +80,20 @@ module.exports = async function handler(req, res) {
     var addr = order.shipping_address;
     var failures = [];
     var firstGelatoId = null;
+    var digitalDeliveries = [];
+    var hasPhysicalItem = false;
 
     for (var i = 0; i < lineItems.length; i++) {
       var item = lineItems[i];
+
+      // "convite-digital" nunca vai para impressão — é entregue por e-mail com o
+      // ficheiro já hospedado em /api/order-image?item=<id>.
+      if (isDigitalOnly(item.product_format)) {
+        digitalDeliveries.push({ templateId: item.template_id, downloadUrl: item.image_url });
+        continue;
+      }
+
+      hasPhysicalItem = true;
       try {
         var gelatoOrder = await createGelatoOrder({
           orderId: order.id,
@@ -126,18 +138,23 @@ module.exports = async function handler(req, res) {
     await supabase
       .from("orders")
       .update({
-        status: "sent_to_print",
+        status: hasPhysicalItem ? "sent_to_print" : "delivered",
         gelato_order_id: firstGelatoId,
         referral_code: referralCode,
         updated_at: new Date().toISOString()
       })
       .eq("id", orderId);
     order.referral_code = referralCode;
+    order.status = hasPhysicalItem ? "sent_to_print" : "delivered";
 
     // E-mail de confirmação é best-effort: uma falha aqui não deve marcar a encomenda
-    // como falhada, já foi paga e enviada para impressão com sucesso.
+    // como falhada, já foi paga (e enviada para impressão e/ou entregue por e-mail) com sucesso.
     try {
-      await sendEmail(order.contact_email, "O teu pedido UniAds Studio foi confirmado", orderConfirmationHtml(order));
+      await sendEmail(
+        order.contact_email,
+        "O teu pedido UniAds Studio foi confirmado",
+        orderConfirmationHtml(order, digitalDeliveries)
+      );
     } catch (emailErr) {
       console.error("Falha ao enviar e-mail de confirmação (order_id=" + orderId + "):", emailErr);
     }

@@ -3,7 +3,11 @@
 // (formato:quantidade:cêntimos). Entradas sem o prefixo do formato ("100:2999") são
 // tratadas como "card", por compatibilidade com a versão anterior desta variável.
 
-var DEFAULT_TABLE = "card:100:2999,card:250:4999,card:500:7999,flyer:50:1999,flyer:100:3499,flyer:250:6999";
+var DEFAULT_TABLE =
+  "card:100:2999,card:250:4999,card:500:7999," +
+  "flyer:50:1999,flyer:100:3499,flyer:250:6999," +
+  "convite:5:1499,convite:10:1999,convite:20:2999,convite:50:4999,convite:100:7999," +
+  "convite-digital:1:990";
 
 function getPriceTable() {
   var raw = process.env.PRICE_TABLE || DEFAULT_TABLE;

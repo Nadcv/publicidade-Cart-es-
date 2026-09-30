@@ -180,8 +180,8 @@
           <button id="share-board" class="btn btn-secondary" type="button" data-i18n="editor.partilhar">Partilhar</button>
         </div>
         <div class="panel-block" id="buy-print-block">
-          <h3 data-i18n="editor.impressosFisicos">Impressos físicos</h3>
-          <p class="hint" data-i18n="editor.impressosHint" style="margin-top:0;">Manda imprimir e entregar em casa (disponível para Cartão de Visita e Flyer A5).</p>
+          <h3 data-i18n="editor.impressosFisicos">Impressos e Convites</h3>
+          <p class="hint" data-i18n="editor.impressosHint" style="margin-top:0;">Cartão de Visita, Flyer A5 ou Convite (impresso ou digital, entregue por e-mail) — manda imprimir e entregar em casa, ou recebe o ficheiro diretamente.</p>
           <div class="cart-add-row">
             <select id="add-qty"></select>
             <button id="add-to-cart-btn" class="btn btn-primary" type="button" data-i18n="editor.adicionarCarrinho">Adicionar ao Carrinho</button>
@@ -293,18 +293,22 @@
       <p class="hint" data-i18n="checkout.hint">Impressão e envio por um parceiro externo (Gelato). O pagamento é processado de forma segura pela Stripe.</p>
 
       <div id="checkout-summary" class="checkout-summary"></div>
+      <p id="checkout-digital-note" class="hint hidden" data-i18n="checkout.digitalNote">Pedido 100% digital — não precisas de indicar morada, os ficheiros são entregues por e-mail.</p>
 
       <form id="checkout-form">
         <div class="field-grid" style="margin-top:14px;">
           <label><span data-i18n="checkout.nome">Nome</span> <input type="text" id="co-first-name" required /></label>
           <label><span data-i18n="checkout.apelido">Apelido</span> <input type="text" id="co-last-name" required /></label>
+          <label class="span-2"><span data-i18n="checkout.email">E-mail</span> <input type="email" id="co-email" required /></label>
+        </div>
+
+        <div id="checkout-shipping-fields" class="field-grid" style="margin-top:14px;">
           <label class="span-2"><span data-i18n="checkout.morada">Morada</span> <input type="text" id="co-address1" required /></label>
           <label class="span-2"><span data-i18n="checkout.complemento">Complemento (opcional)</span> <input type="text" id="co-address2" /></label>
           <label><span data-i18n="checkout.cidade">Cidade</span> <input type="text" id="co-city" required /></label>
           <label><span data-i18n="checkout.codigoPostal">Código Postal</span> <input type="text" id="co-postcode" required /></label>
           <label><span data-i18n="checkout.pais">País (código, ex: PT)</span> <input type="text" id="co-country" maxlength="2" placeholder="PT" required /></label>
           <label><span data-i18n="checkout.telefone">Telefone (opcional)</span> <input type="text" id="co-phone" /></label>
-          <label class="span-2"><span data-i18n="checkout.email">E-mail</span> <input type="email" id="co-email" required /></label>
         </div>
 
         <button type="submit" id="checkout-submit" class="btn btn-primary btn-lg" style="width:100%;margin-top:18px;" data-i18n="checkout.irPagamento">

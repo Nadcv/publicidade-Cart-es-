@@ -46,12 +46,13 @@
 (function () {
   var STATUS_LABEL = {
     pending_payment: "A aguardar pagamento",
-    paid: "Pago — a preparar impressão",
+    paid: "Pago — a preparar",
     sent_to_print: "Enviado para impressão",
+    delivered: "Entregue por e-mail",
     failed: "Problema no processamento (contacta-nos)",
     canceled: "Cancelado"
   };
-  var FORMAT_LABEL = { card: "Cartão de Visita", flyer: "Flyer A5" };
+  var FORMAT_LABEL = { card: "Cartão de Visita", flyer: "Flyer A5", convite: "Convite (Impresso)", "convite-digital": "Convite Digital" };
 
   var form = document.getElementById("lookup-form");
   var statusEl = document.getElementById("lookup-status");

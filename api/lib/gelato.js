@@ -6,9 +6,17 @@
 var ORDER_API_BASE = "https://order.gelatoapis.com/v4";
 
 // UID do produto Gelato por formato. GELATO_PRODUCT_UID (sem sufixo) continua a
-// funcionar como o UID do cartão de visita, por compatibilidade.
+// funcionar como o UID do cartão de visita, por compatibilidade. "convite-digital"
+// nunca chega aqui — é entregue por e-mail, nunca passa pela Gelato (ver
+// api/lib/formats.js e stripe-webhook.js).
+var UID_ENV_BY_FORMAT = {
+  flyer: "GELATO_PRODUCT_UID_FLYER",
+  convite: "GELATO_PRODUCT_UID_CONVITE"
+};
+
 function productUidForFormat(format) {
-  if (format === "flyer") return process.env.GELATO_PRODUCT_UID_FLYER;
+  var envKey = UID_ENV_BY_FORMAT[format];
+  if (envKey) return process.env[envKey];
   return process.env.GELATO_PRODUCT_UID_CARD || process.env.GELATO_PRODUCT_UID;
 }
 
@@ -18,7 +26,7 @@ async function createGelatoOrder(opts) {
   if (!apiKey || !productUid) {
     throw new Error(
       "GELATO_API_KEY / UID do produto (" +
-        (opts.format === "flyer" ? "GELATO_PRODUCT_UID_FLYER" : "GELATO_PRODUCT_UID_CARD") +
+        (UID_ENV_BY_FORMAT[opts.format] || "GELATO_PRODUCT_UID_CARD") +
         ") em falta nas variáveis de ambiente."
     );
   }

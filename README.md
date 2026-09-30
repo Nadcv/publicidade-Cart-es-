@@ -20,8 +20,11 @@ Abra `http://localhost:8080`. Não precisa de `npm install`: é HTML/CSS/JS puro
   `Eventos & Festas`, `Saúde & Bem-estar`, `Automotivo`, `Educação`, `Moda`,
   `Corporativo & Advocacia`, `Pet Shops & Veterinária`, `Fitness & Academias`) traz 2 modelos
   com paleta, layout e ícone próprios.
-- **4 formatos**: Cartão de Visita (frente/verso), Post Instagram, Story e Flyer A5 — a mesma
-  identidade visual do modelo se adapta a cada formato.
+- **6 formatos**: Cartão de Visita (frente/verso), Post Instagram, Story, Flyer A5, Convite
+  (impresso, em tiragens pequenas — 5/10/20/50/100 unidades, ideal para casamentos e festas) e
+  Convite Digital (entregue só por e-mail, sem impressão nem morada) — a mesma identidade visual
+  do modelo se adapta a cada formato, e o campo "Endereço/Cidade" passa a mostrar a localização
+  do evento na própria arte (post, story, flyer e convites).
 - **Editor ao vivo**: nome, cargo, empresa, slogan, telefone, e-mail, site, rede social e
   endereço atualizam a pré-visualização em tempo real; logotipo por upload (substitui o ícone
   do segmento) e cores primária/secundária personalizáveis por cima da paleta do modelo.
@@ -36,10 +39,11 @@ Abra `http://localhost:8080`. Não precisa de `npm install`: é HTML/CSS/JS puro
 - **Meus Projetos**: salvar, editar, duplicar e excluir projetos — persistidos no
   `localStorage` do navegador (nada é enviado a um servidor).
 - **Carrinho com vários itens**: dá para adicionar vários designs/formatos/quantidades ao
-  carrinho (até 10 itens) e pagar tudo numa única compra/envio.
-- **Impressos físicos com cupão de desconto**: Cartão de Visita e Flyer A5 têm preços e
-  quantidades próprios; no checkout da Stripe o cliente pode inserir um código de desconto
-  (cupões geridos no dashboard da Stripe, não no código).
+  carrinho (até 10 itens, físicos e/ou digitais) e pagar tudo numa única compra/envio. Se o
+  carrinho for 100% digital (só "Convite Digital"), o checkout nem pede morada de envio.
+- **Impressos físicos com cupão de desconto**: cada formato impresso tem preços e quantidades
+  próprios; no checkout da Stripe o cliente pode inserir um código de desconto (cupões geridos
+  no dashboard da Stripe, não no código).
 - **Códigos de referência**: depois de um pedido pago, é gerado automaticamente um código de
   desconto Stripe único que o cliente pode partilhar com amigos (ver `REFERRAL_COUPON_ID`).
 - **Consulta de encomendas** (`minhas-encomendas.html`): o cliente escreve o e-mail usado na
@@ -87,7 +91,7 @@ api/                      Funções serverless (tem de ficar na raiz — é a pa
   testimonials.js             Lista pública dos depoimentos aprovados
   admin/orders.js              Lista todas as encomendas, paginado (usado por admin.html)
   admin/testimonials.js        CRUD de depoimentos (protegido por ADMIN_PASSWORD)
-  lib/{supabase,gelato,price,email,adminAuth,referral}.js   Helpers dos serviços externos
+  lib/{supabase,gelato,price,email,adminAuth,referral,formats}.js   Helpers dos serviços externos
 
 supabase/schema.sql       Tabelas `orders`, `order_items` e `testimonials` (ver secção de
                           monetização abaixo)
@@ -109,26 +113,32 @@ template para garantir contraste — ver `TEMPLATES` em `app.js`.
 - **Projetos e carrinho não sincronizam entre dispositivos**: ficam só no `localStorage` do
   navegador onde foram guardados — não há backend nem conta de usuário.
 
-## Monetização: cartões e flyers impressos (Stripe + Supabase + Gelato + Resend)
+## Monetização: impressos e convites (Stripe + Supabase + Gelato + Resend)
 
-Nos formatos "Cartão de Visita" e "Flyer A5", o editor mostra um botão **"Comprar impressos"**
-que abre um checkout: o cliente escolhe quantidade (por formato — ver `PRICE_TABLE`) e morada,
-paga via Stripe (com campo de cupão de desconto), e o pedido é enviado automaticamente para
-impressão e envio pela [Gelato](https://gelato.com) (rede de impressão sob encomenda com API
-pública, print-on-demand local ao destinatário).
+Nos formatos impressos (Cartão de Visita, Flyer A5, Convite) o editor mostra um botão
+**"Adicionar ao Carrinho"** que leva a um checkout: o cliente escolhe quantidade (por formato —
+ver `PRICE_TABLE`) e morada, paga via Stripe (com campo de cupão de desconto), e o pedido é
+enviado automaticamente para impressão e envio pela [Gelato](https://gelato.com) (rede de
+impressão sob encomenda com API pública, print-on-demand local ao destinatário). O formato
+**"Convite Digital"** é diferente: não passa pela Gelato nem pede morada — o ficheiro final é
+entregue por e-mail assim que o pagamento é confirmado (ver `api/lib/formats.js` para a lista
+de formatos "só digitais").
 
 ```
 Cliente adiciona 1+ designs ao carrinho → cada item gera o seu PNG no browser
   → POST /api/create-checkout-session com a lista de itens
        (grava o pedido "pai" (orders) + uma linha por item (order_items), cada uma com a
-        sua imagem em base64, cria uma Stripe Checkout Session com um line_item por item)
+        sua imagem em base64, cria uma Stripe Checkout Session com um line_item por item —
+        morada só é pedida/exigida se houver pelo menos um item impresso no carrinho)
   → cliente paga na página da Stripe (pode aplicar um cupão de desconto, incluindo um
     código de referência partilhado por outro cliente)
   → Stripe chama /api/stripe-webhook (checkout.session.completed)
-       (marca o pedido como "paid", chama a Gelato Order API uma vez por item — cada uma
-        descarrega a sua imagem via /api/order-image?item=<id> — marca "sent_to_print",
-        gera um código de referência único para este cliente e envia o e-mail de
-        confirmação via Resend, se configurada)
+       (marca o pedido como "paid"; para cada item impresso chama a Gelato Order API — que
+        descarrega a imagem via /api/order-image?item=<id> —, e para cada item
+        "convite-digital" salta a Gelato e prepara o link de download; marca o pedido como
+        "sent_to_print" (se houver algum item impresso) ou "delivered" (se for 100%
+        digital), gera um código de referência único para este cliente e envia o e-mail de
+        confirmação via Resend, se configurada, com os links de download dos itens digitais)
   → pedido-confirmado.html faz polling a /api/order-status até mostrar o estado final
   → o cliente pode depois consultar tudo em minhas-encomendas.html pelo e-mail
 ```
@@ -149,14 +159,16 @@ mais simples (tudo com plano gratuito para começar):
 2. **Supabase**: cria um projeto e corre `supabase/schema.sql` no SQL Editor (não precisa de
    nenhum bucket de Storage — a imagem fica nas próprias tabelas `orders`/`order_items`). Se
    já tinhas a tabela `orders` de uma versão anterior, corre também as migrações comentadas no
-   topo do ficheiro (`alter table orders add column if not exists item_count ...` e
-   `referral_code ...`) e a criação da tabela `order_items`.
-3. **Gelato**: confirma o `productUid` exato de cada formato que queres vender (cartão e/ou
-   flyer) — usa a tua API key da Gelato para chamar
+   topo do ficheiro (`item_count`, `referral_code`, a criação da tabela `order_items`, e o
+   alargamento dos `check` de `product_format`/`status` para incluir `convite` /
+   `convite-digital` / `delivered`).
+3. **Gelato**: confirma o `productUid` exato de cada formato **impresso** que queres vender
+   (cartão, flyer e/ou convite — "convite-digital" não precisa de nenhum, nunca é impresso) —
+   usa a tua API key da Gelato para chamar
    `GET https://product.gelatoapis.com/v3/products:search` (filtra por "business card" /
-   "flyer" no tamanho/acabamento desejado) e copia os `productUid` devolvidos para
-   `GELATO_PRODUCT_UID_CARD` / `GELATO_PRODUCT_UID_FLYER`. **Não uses os valores em
-   `.env.example` sem confirmar** — são só placeholders.
+   "flyer" / "invitation" no tamanho/acabamento desejado) e copia os `productUid` devolvidos
+   para `GELATO_PRODUCT_UID_CARD` / `GELATO_PRODUCT_UID_FLYER` / `GELATO_PRODUCT_UID_CONVITE`.
+   **Não uses os valores em `.env.example` sem confirmar** — são só placeholders.
 4. **Preço**: define `PRICE_TABLE` no `.env` só depois de saberes o custo real da Gelato
    (impressão + envio) para o destino que vais vender — os valores de exemplo não são reais.
 5. **Cupões de desconto** (opcional): cria em Stripe Dashboard → Product catalog → Coupons /
