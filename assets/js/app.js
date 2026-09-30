@@ -207,7 +207,7 @@
   ];
 
   var FORMATS = [
-    { id: "card", label: "Cartão de Visita", type: "card", printable: true, printQuantities: [100, 250, 500] },
+    { id: "card", label: "Cartão de Visita", type: "card", printable: true, printQuantities: [5, 10, 20, 50, 100, 250, 500] },
     { id: "post", label: "Post Instagram", type: "ad", printable: false },
     { id: "story", label: "Story", type: "ad", printable: false },
     { id: "flyer", label: "Flyer A5", type: "ad", printable: true, printQuantities: [50, 100, 250] },

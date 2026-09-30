@@ -20,11 +20,12 @@ Abra `http://localhost:8080`. Não precisa de `npm install`: é HTML/CSS/JS puro
   `Eventos & Festas`, `Saúde & Bem-estar`, `Automotivo`, `Educação`, `Moda`,
   `Corporativo & Advocacia`, `Pet Shops & Veterinária`, `Fitness & Academias`) traz 2 modelos
   com paleta, layout e ícone próprios.
-- **7 formatos**: Cartão de Visita (frente/verso), Post Instagram, Story, Flyer A5, Convite
-  (impresso, em tiragens pequenas — 5/10/20/50/100 unidades, ideal para casamentos e festas),
-  Convite Digital (entregue só por e-mail, sem impressão nem morada) e Chip NFC (ver abaixo) — a
-  mesma identidade visual do modelo se adapta a cada formato, e o campo "Endereço/Cidade" passa
-  a mostrar a localização do evento na própria arte (post, story, flyer e convites).
+- **7 formatos**: Cartão de Visita (frente/verso, mínimo de encomenda 5 unidades —
+  5/10/20/50/100/250/500), Post Instagram, Story, Flyer A5, Convite (impresso, em tiragens
+  pequenas — 5/10/20/50/100 unidades, ideal para casamentos e festas), Convite Digital
+  (entregue só por e-mail, sem impressão nem morada) e Chip NFC (ver abaixo) — a mesma
+  identidade visual do modelo se adapta a cada formato, e o campo "Endereço/Cidade" passa a
+  mostrar a localização do evento na própria arte (post, story, flyer e convites).
 - **Editor ao vivo**: nome, cargo, empresa, slogan, telefone, e-mail, site, rede social e
   endereço atualizam a pré-visualização em tempo real; logotipo por upload (substitui o ícone
   do segmento) e cores primária/secundária personalizáveis por cima da paleta do modelo.
