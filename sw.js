@@ -1,7 +1,9 @@
-// Service worker do UniAds Studio — permite instalar o site como app e acelera
-// visitas seguintes fazendo cache dos ficheiros estáticos. Nunca intercepta pedidos
-// a /api/* (pagamentos, encomendas, etc. têm de ser sempre em direto, nunca em cache).
-var CACHE_NAME = "uniads-v1";
+// Service worker do UniAds Studio — permite instalar o site como app. Estratégia
+// "network-first": tenta sempre a rede primeiro (para nunca mostrar uma versão
+// desatualizada do site depois de um deploy novo) e só usa a cache como
+// last-resort, se o pedido falhar por estar offline. Nunca intercepta pedidos a
+// /api/* (pagamentos, encomendas, etc. têm de ser sempre em direto, nunca em cache).
+var CACHE_NAME = "uniads-v2";
 var PRECACHE = [
   "/index.html",
   "/assets/css/style.css",
@@ -35,17 +37,14 @@ self.addEventListener("fetch", function (event) {
   if (url.pathname.indexOf("/api/") === 0 || event.request.method !== "GET") return;
 
   event.respondWith(
-    caches.match(event.request).then(function (cached) {
-      var networkFetch = fetch(event.request)
-        .then(function (response) {
-          if (response && response.ok) {
-            var copy = response.clone();
-            caches.open(CACHE_NAME).then(function (cache) { cache.put(event.request, copy); });
-          }
-          return response;
-        })
-        .catch(function () { return cached; });
-      return cached || networkFetch;
-    })
+    fetch(event.request)
+      .then(function (response) {
+        if (response && response.ok) {
+          var copy = response.clone();
+          caches.open(CACHE_NAME).then(function (cache) { cache.put(event.request, copy); });
+        }
+        return response;
+      })
+      .catch(function () { return caches.match(event.request); })
   );
 });
