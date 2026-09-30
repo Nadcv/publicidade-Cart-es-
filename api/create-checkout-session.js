@@ -1,7 +1,7 @@
 var Stripe = require("stripe");
-var { getSupabaseAdmin } = require("./lib/supabase");
-var { priceForQuantity, getAllowedQuantities } = require("./lib/price");
-var { isAllowedFormat, isDigitalOnly } = require("./lib/formats");
+var { getSupabaseAdmin } = require("../lib/supabase");
+var { priceForQuantity, getAllowedQuantities } = require("../lib/price");
+var { isAllowedFormat, isDigitalOnly } = require("../lib/formats");
 
 var ALWAYS_REQUIRED_FIELDS = ["firstName", "lastName", "email"];
 var PHYSICAL_ONLY_FIELDS = ["addressLine1", "city", "postCode", "country"];

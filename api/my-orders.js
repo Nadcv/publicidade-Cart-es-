@@ -1,4 +1,4 @@
-var { getSupabaseAdmin } = require("./lib/supabase");
+var { getSupabaseAdmin } = require("../lib/supabase");
 
 // Consulta as encomendas de um cliente pelo e-mail (o mesmo usado na morada de envio).
 // Não expõe dados sensíveis (sem image_data, sem morada completa, sem ids da Stripe/Gelato).

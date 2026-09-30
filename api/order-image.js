@@ -1,4 +1,4 @@
-var { getSupabaseAdmin } = require("./lib/supabase");
+var { getSupabaseAdmin } = require("../lib/supabase");
 
 // Serve a arte de impressão de uma encomenda diretamente a partir da base de dados
 // (image_data, guardado em base64). É esta URL que é passada à Gelato para descarregar

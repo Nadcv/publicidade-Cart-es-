@@ -1,5 +1,5 @@
-var { getSupabaseAdmin } = require("../lib/supabase");
-var { requireAdmin } = require("../lib/adminAuth");
+var { getSupabaseAdmin } = require("../../lib/supabase");
+var { requireAdmin } = require("../../lib/adminAuth");
 
 module.exports = async function handler(req, res) {
   if (!requireAdmin(req, res)) return;

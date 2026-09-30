@@ -1,4 +1,4 @@
-var { getSupabaseAdmin } = require("./lib/supabase");
+var { getSupabaseAdmin } = require("../lib/supabase");
 
 // Lista pública dos depoimentos aprovados (adicionados manualmente pelo dono do site).
 module.exports = async function handler(req, res) {

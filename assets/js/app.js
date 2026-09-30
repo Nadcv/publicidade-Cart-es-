@@ -216,7 +216,7 @@
   ];
 
   // Formatos entregues só por e-mail (sem impressão, sem morada de envio) — tem de bater
-  // certo com DIGITAL_ONLY_FORMATS em api/lib/formats.js.
+  // certo com DIGITAL_ONLY_FORMATS em lib/formats.js.
   var DIGITAL_ONLY_FORMATS = ["convite-digital"];
   function isDigitalOnlyFormat(formatId) { return DIGITAL_ONLY_FORMATS.indexOf(formatId) !== -1; }
 

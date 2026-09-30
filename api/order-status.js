@@ -1,4 +1,4 @@
-var { getSupabaseAdmin } = require("./lib/supabase");
+var { getSupabaseAdmin } = require("../lib/supabase");
 
 module.exports = async function handler(req, res) {
   if (req.method !== "GET") {

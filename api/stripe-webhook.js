@@ -1,9 +1,9 @@
 var Stripe = require("stripe");
-var { getSupabaseAdmin } = require("./lib/supabase");
-var { createGelatoOrder } = require("./lib/gelato");
-var { sendEmail, orderConfirmationHtml } = require("./lib/email");
-var { createReferralCode } = require("./lib/referral");
-var { isDigitalOnly } = require("./lib/formats");
+var { getSupabaseAdmin } = require("../lib/supabase");
+var { createGelatoOrder } = require("../lib/gelato");
+var { sendEmail, orderConfirmationHtml } = require("../lib/email");
+var { createReferralCode } = require("../lib/referral");
+var { isDigitalOnly } = require("../lib/formats");
 
 function readRawBody(req) {
   return new Promise(function (resolve, reject) {

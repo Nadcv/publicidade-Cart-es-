@@ -1,5 +1,5 @@
-var { getSupabaseAdmin } = require("../lib/supabase");
-var { requireAdmin } = require("../lib/adminAuth");
+var { getSupabaseAdmin } = require("../../lib/supabase");
+var { requireAdmin } = require("../../lib/adminAuth");
 
 // Lista todas as encomendas para o painel de administração. Protegido por uma
 // palavra-passe simples (header X-Admin-Password), definida em ADMIN_PASSWORD.

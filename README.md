@@ -76,7 +76,10 @@ assets/
   icon-192.png / icon-512.png / og-image.png   Ícones da PWA e imagem para redes sociais
 
 api/                      Funções serverless (tem de ficar na raiz — é a pasta que a Vercel
-                          deteta automaticamente para isto, não pode ser movida)
+                          deteta automaticamente para isto, não pode ser movida). Cada ficheiro
+                          `.js` aqui dentro é uma Function separada — a conta grátis (Hobby) da
+                          Vercel só permite 12 por deployment, por isso os helpers partilhados
+                          vivem em `lib/` (fora de `api/`) e não em `api/lib/`.
   create-checkout-session.js  Recebe os itens do carrinho, grava o pedido + order_items (com a
                               imagem em base64 de cada item), cria a Stripe Checkout Session
                               (um line_item por item, cupões de desconto ativados)
@@ -91,7 +94,9 @@ api/                      Funções serverless (tem de ficar na raiz — é a pa
   testimonials.js             Lista pública dos depoimentos aprovados
   admin/orders.js              Lista todas as encomendas, paginado (usado por admin.html)
   admin/testimonials.js        CRUD de depoimentos (protegido por ADMIN_PASSWORD)
-  lib/{supabase,gelato,price,email,adminAuth,referral,formats}.js   Helpers dos serviços externos
+
+lib/{supabase,gelato,price,email,adminAuth,referral,formats}.js   Helpers dos serviços
+                          externos, partilhados pelas funções em api/ (não são endpoints)
 
 supabase/schema.sql       Tabelas `orders`, `order_items` e `testimonials` (ver secção de
                           monetização abaixo)
@@ -121,7 +126,7 @@ ver `PRICE_TABLE`) e morada, paga via Stripe (com campo de cupão de desconto), 
 enviado automaticamente para impressão e envio pela [Gelato](https://gelato.com) (rede de
 impressão sob encomenda com API pública, print-on-demand local ao destinatário). O formato
 **"Convite Digital"** é diferente: não passa pela Gelato nem pede morada — o ficheiro final é
-entregue por e-mail assim que o pagamento é confirmado (ver `api/lib/formats.js` para a lista
+entregue por e-mail assim que o pagamento é confirmado (ver `lib/formats.js` para a lista
 de formatos "só digitais").
 
 ```

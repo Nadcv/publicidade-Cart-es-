@@ -1,4 +1,4 @@
-var { getPriceTable } = require("./lib/price");
+var { getPriceTable } = require("../lib/price");
 
 // Tabela de preços pública (apenas para o carrinho mostrar subtotais). O preço
 // realmente cobrado é sempre recalculado no servidor em create-checkout-session.
