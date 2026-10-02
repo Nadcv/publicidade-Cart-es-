@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /admin.html
+Disallow: /cartao-digital.html
+Disallow: /pedido-confirmado.html
+Disallow: /api/
+
+Sitemap: https://publicidade-cart-es.vercel.app/sitemap.xml

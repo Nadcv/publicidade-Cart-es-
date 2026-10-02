@@ -939,6 +939,16 @@
     });
   }
 
+  // TROCA pelo teu número de WhatsApp real, em formato internacional, só dígitos
+  // (sem "+" nem espaços — ex: "351912345678").
+  var WHATSAPP_NUMBER = "351900000000";
+  function initWhatsAppButton() {
+    var btn = $("#whatsapp-float");
+    if (!btn || !WHATSAPP_NUMBER) return;
+    var msg = "Olá! Gostava de saber mais sobre os cartões/convites da UniAds Studio.";
+    btn.href = "https://wa.me/" + WHATSAPP_NUMBER + "?text=" + encodeURIComponent(msg);
+  }
+
   var THEME_KEY = "uniads_theme";
   function themeLabel(theme) {
     var key = theme === "light" ? "theme.dark" : "theme.light";
@@ -1351,6 +1361,8 @@
       ? window.location.hash.slice(1)
       : "categorias";
     showSection(initialSection, true);
+
+    initWhatsAppButton();
 
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", function () {

@@ -22,7 +22,8 @@ module.exports = async function handler(req, res) {
       .from("orders")
       .select(
         "id, status, product_format, template_id, quantity, item_count, amount_cents, currency, " +
-          "shipping_name, shipping_address, contact_email, gelato_order_id, referral_code, error_message, created_at",
+          "shipping_name, shipping_address, contact_email, gelato_order_id, referral_code, " +
+          "tracking_code, tracking_url, carrier_name, error_message, created_at",
         { count: "exact" }
       )
       .order("created_at", { ascending: false })

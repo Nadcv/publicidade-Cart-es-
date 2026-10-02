@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<meta name="robots" content="noindex, nofollow" />
 <title>Pedido confirmado — UniAds Studio</title>
 <script>try{document.documentElement.setAttribute("data-theme",localStorage.getItem("uniads_theme")==="light"?"light":"dark")}catch(e){}</script>
 <link rel="stylesheet" href="assets/css/style.css" />
@@ -30,6 +31,7 @@
   <footer class="site-footer">
     <span>UniAds Studio — parte do ecossistema Unisocial.</span>
   </footer>
+  <a id="whatsapp-float" class="whatsapp-float" href="https://wa.me/351900000000" target="_blank" rel="noopener" aria-label="Contactar por WhatsApp" title="Fala connosco no WhatsApp">💬</a>
 </div>
 
 <script>
@@ -69,11 +71,15 @@
             '<p style="margin:0 0 4px;font-size:.78rem;color:var(--text-soft);">O teu código para partilhares com amigos:</p>' +
             '<p style="margin:0;font-size:1.1rem;font-weight:700;letter-spacing:.04em;">' + data.referral_code + "</p></div>"
           : "";
+        var trackingHtml = data.tracking_url
+          ? '<p style="margin-top:14px;"><a href="' + data.tracking_url + '" target="_blank" rel="noopener" class="btn btn-secondary">📦 Rastrear encomenda' +
+            (data.carrier_name ? " (" + data.carrier_name + ")" : "") + "</a></p>"
+          : "";
         box.innerHTML =
           "<h2>Obrigado pelo teu pedido!</h2>" +
           "<p>" + label + "</p>" +
           "<p style=\"color:var(--text-soft);font-size:.85rem;\">" + data.quantity + " cartões" + itemsNote + " · " + price + "</p>" +
-          referralHtml;
+          referralHtml + trackingHtml;
         if (data.status === "pending_payment" || data.status === "paid") {
           window.setTimeout(poll, 3000);
         }

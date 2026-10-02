@@ -1,9 +1,10 @@
 var Stripe = require("stripe");
 var { getSupabaseAdmin } = require("../lib/supabase");
 var { createGelatoOrder } = require("../lib/gelato");
-var { sendEmail, orderConfirmationHtml } = require("../lib/email");
+var { sendEmail, orderConfirmationHtml, abandonedCartHtml } = require("../lib/email");
 var { createReferralCode } = require("../lib/referral");
 var { isDigitalOnly, isManualFulfillment } = require("../lib/formats");
+var { createStripeSessionForOrder } = require("../lib/checkout");
 
 function readRawBody(req) {
   return new Promise(function (resolve, reject) {
@@ -12,6 +13,62 @@ function readRawBody(req) {
     req.on("end", function () { resolve(Buffer.concat(chunks)); });
     req.on("error", reject);
   });
+}
+
+// Carrinho abandonado: a Stripe expira sozinha uma Checkout Session não paga (24h por
+// omissão) e dispara "checkout.session.expired" — reaproveitamos isso para o e-mail de
+// lembrete, sem precisar de nenhum endpoint/cron novo. Requer que este evento esteja
+// subscrito no webhook do dashboard da Stripe (Developers → Webhooks → o teu endpoint).
+async function handleCheckoutExpired(req, res, supabase, stripe, expiredSession) {
+  var orderId = expiredSession.metadata && expiredSession.metadata.order_id;
+  if (!orderId) { res.status(200).json({ received: true }); return; }
+
+  try {
+    var orderResult = await supabase.from("orders").select("*").eq("id", orderId).single();
+    if (orderResult.error || !orderResult.data) { res.status(200).json({ received: true }); return; }
+    var order = orderResult.data;
+
+    // Só reage se ainda não foi pago E ainda não processámos esta expiração antes
+    // (idempotência: stripe_session_id já teria mudado se já tivéssemos recriado a sessão).
+    if (order.status !== "pending_payment" || order.stripe_session_id !== expiredSession.id) {
+      res.status(200).json({ received: true });
+      return;
+    }
+
+    var itemsResult = await supabase.from("order_items").select("*").eq("order_id", orderId);
+    var rows = (itemsResult.data && itemsResult.data.length) ? itemsResult.data : [
+      { template_id: order.template_id, product_format: order.product_format, quantity: order.quantity, fields: order.fields, amount_cents: order.amount_cents }
+    ];
+    var normalizedItems = rows.map(function (it) {
+      return { templateId: it.template_id, format: it.product_format, quantity: it.quantity, fields: it.fields || {}, amountCents: it.amount_cents };
+    });
+
+    var siteUrl = process.env.PUBLIC_SITE_URL || ("https://" + req.headers.host);
+    var newSession = await createStripeSessionForOrder({
+      orderId: order.id,
+      items: normalizedItems,
+      currency: order.currency,
+      email: order.contact_email,
+      siteUrl: siteUrl
+    });
+
+    await supabase
+      .from("orders")
+      .update({ stripe_session_id: newSession.id, abandoned_email_sent: true, updated_at: new Date().toISOString() })
+      .eq("id", orderId);
+
+    if (!order.abandoned_email_sent) {
+      try {
+        await sendEmail(order.contact_email, "Ainda tens itens no carrinho — UniAds Studio", abandonedCartHtml(order, newSession.url));
+      } catch (emailErr) {
+        console.error("Falha ao enviar e-mail de carrinho abandonado (order_id=" + orderId + "):", emailErr);
+      }
+    }
+  } catch (err) {
+    console.error("Falha ao processar carrinho abandonado (order_id=" + orderId + "):", err);
+  }
+
+  res.status(200).json({ received: true });
 }
 
 module.exports = async function handler(req, res) {
@@ -29,6 +86,11 @@ module.exports = async function handler(req, res) {
   } catch (err) {
     console.error("Assinatura do webhook inválida:", err.message);
     res.status(400).send("Webhook Error: " + err.message);
+    return;
+  }
+
+  if (event.type === "checkout.session.expired") {
+    await handleCheckoutExpired(req, res, getSupabaseAdmin(), stripe, event.data.object);
     return;
   }
 

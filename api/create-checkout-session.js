@@ -1,7 +1,7 @@
-var Stripe = require("stripe");
 var { getSupabaseAdmin } = require("../lib/supabase");
 var { priceForQuantity, getAllowedQuantities } = require("../lib/price");
 var { isAllowedFormat, isDigitalOnly, needsImage } = require("../lib/formats");
+var { createStripeSessionForOrder } = require("../lib/checkout");
 
 var ALWAYS_REQUIRED_FIELDS = ["firstName", "lastName", "email"];
 var PHYSICAL_ONLY_FIELDS = ["addressLine1", "city", "postCode", "country"];
@@ -149,38 +149,12 @@ module.exports = async function handler(req, res) {
     await Promise.all(itemUrlUpdates);
 
     // 4. Cria a sessão de pagamento Stripe, um line_item por item do carrinho.
-    var FORMAT_PRODUCT_NAME = {
-      card: "Cartões de visita impressos",
-      flyer: "Flyers A5 impressos",
-      convite: "Convites impressos",
-      "convite-digital": "Convite digital (entrega por e-mail)",
-      nfc: "Chip NFC com cartão digital"
-    };
-    var lineItems = items.map(function (it) {
-      var productName = (FORMAT_PRODUCT_NAME[it.format] || "Impressos") +
-        " (" + it.quantity + " un.) — " + it.templateId;
-      return {
-        quantity: 1,
-        price_data: {
-          currency: currency,
-          unit_amount: it.amountCents,
-          product_data: {
-            name: productName,
-            description: (it.fields.empresa || it.fields.nome || "UniAds Studio")
-          }
-        }
-      };
-    });
-
-    var stripe = Stripe(process.env.STRIPE_SECRET_KEY);
-    var session = await stripe.checkout.sessions.create({
-      mode: "payment",
-      allow_promotion_codes: true,
-      line_items: lineItems,
-      customer_email: shipping.email,
-      metadata: { order_id: order.id },
-      success_url: siteUrl + "/pedido-confirmado.html?session_id={CHECKOUT_SESSION_ID}",
-      cancel_url: siteUrl + "/index.html#editor"
+    var session = await createStripeSessionForOrder({
+      orderId: order.id,
+      items: items,
+      currency: currency,
+      email: shipping.email,
+      siteUrl: siteUrl
     });
 
     await supabase.from("orders").update({ stripe_session_id: session.id }).eq("id", order.id);

@@ -40,6 +40,7 @@
   <footer class="site-footer">
     <span>UniAds Studio — parte do ecossistema Unisocial.</span>
   </footer>
+  <a id="whatsapp-float" class="whatsapp-float" href="https://wa.me/351900000000" target="_blank" rel="noopener" aria-label="Contactar por WhatsApp" title="Fala connosco no WhatsApp">💬</a>
 </div>
 
 <script>
@@ -79,13 +80,17 @@
       var referralNote = o.referral_code
         ? '<span style="font-size:.72rem;">Código para amigos: <strong>' + escapeHtml(o.referral_code) + "</strong></span>"
         : "";
+      var trackingNote = o.tracking_url
+        ? '<a href="' + o.tracking_url + '" target="_blank" rel="noopener" style="font-size:.72rem;">📦 Rastrear encomenda' +
+          (o.carrier_name ? " (" + escapeHtml(o.carrier_name) + ")" : "") + "</a>"
+        : "";
       return (
         '<div class="project-card">' +
         '<div class="project-info">' +
         "<strong>" + escapeHtml(format) + " · " + o.quantity + " un." + itemsNote + "</strong>" +
         "<span>" + escapeHtml(status) + "</span>" +
         "<span>" + price + " · " + date + "</span>" +
-        referralNote +
+        referralNote + trackingNote +
         '<span style="font-size:.68rem;opacity:.7;">Ref: ' + escapeHtml(o.id) + "</span>" +
         "</div></div>"
       );

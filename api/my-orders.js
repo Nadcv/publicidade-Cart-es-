@@ -18,7 +18,7 @@ module.exports = async function handler(req, res) {
     var supabase = getSupabaseAdmin();
     var result = await supabase
       .from("orders")
-      .select("id, status, product_format, template_id, quantity, item_count, amount_cents, currency, referral_code, created_at")
+      .select("id, status, product_format, template_id, quantity, item_count, amount_cents, currency, referral_code, tracking_code, tracking_url, carrier_name, created_at")
       .ilike("contact_email", email)
       .order("created_at", { ascending: false })
       .limit(20);

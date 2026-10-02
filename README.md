@@ -59,8 +59,19 @@ Abra `http://localhost:8080`. Não precisa de `npm install`: é HTML/CSS/JS puro
   permite gerir depoimentos de clientes.
 - **E-mail de confirmação automático**: quando o pedido é enviado para impressão, o cliente
   recebe um e-mail (via Resend) com o resumo da encomenda e o código de referência.
+- **Rastreio de envio** (opcional): se configurares o webhook da Gelato, o cliente passa a ver
+  um botão "📦 Rastrear encomenda" em `pedido-confirmado.html` e `minhas-encomendas.html` assim
+  que a Gelato marcar o pedido como expedido.
+- **Carrinho abandonado**: se alguém iniciar o checkout mas não pagar, a sessão da Stripe expira
+  sozinha (24h) e envia-se automaticamente um e-mail de lembrete com um novo link de pagamento —
+  sem precisar de nenhuma tarefa agendada (cron) nem endpoint novo.
+- **Botão de WhatsApp**: um botão flutuante em todas as páginas de cliente, para quem preferir
+  falar diretamente contigo em vez de usar o checkout.
 - **Multi-idioma** (PT/EN/ES), **tema claro/escuro** e **app instalável (PWA)** — funciona como
   app no telemóvel/computador, com ícone próprio e cache dos ficheiros estáticos.
+- **SEO básico**: `robots.txt`, `sitemap.xml`, dados estruturados (Organization) e tag canónica
+  na página inicial; páginas pessoais/transacionais (`cartao-digital.html`,
+  `pedido-confirmado.html`, `admin.html`) ficam marcadas como `noindex`.
 
 ## Arquitetura
 
@@ -73,6 +84,7 @@ cartao-digital.html       Cartão Digital público (o que um chip NFC ou QR code
 admin.html                Painel de administração (protegido por ADMIN_PASSWORD)
 manifest.json / sw.js     App instalável (PWA): manifest + service worker (cache dos estáticos,
                           nunca de /api/*)
+robots.txt / sitemap.xml  SEO básico
 
 assets/
   css/style.css           Tema da aplicação + sistema de "art board" (cartão/anúncio) themeable
@@ -86,13 +98,16 @@ assets/
 api/                      Funções serverless (tem de ficar na raiz — é a pasta que a Vercel
                           deteta automaticamente para isto, não pode ser movida). Cada ficheiro
                           `.js` aqui dentro é uma Function separada — a conta grátis (Hobby) da
-                          Vercel só permite 12 por deployment, por isso os helpers partilhados
-                          vivem em `lib/` (fora de `api/`) e não em `api/lib/`.
+                          Vercel só permite 12 por deployment (temos 11), por isso os helpers
+                          partilhados vivem em `lib/` (fora de `api/`) e não em `api/lib/`.
   create-checkout-session.js  Recebe os itens do carrinho, grava o pedido + order_items (com a
                               imagem em base64 de cada item), cria a Stripe Checkout Session
                               (um line_item por item, cupões de desconto ativados)
   stripe-webhook.js           Confirma o pagamento, cria uma encomenda na Gelato por item do
-                              carrinho, gera o código de referência e envia o e-mail
+                              carrinho, gera o código de referência, envia o e-mail, e trata
+                              "checkout.session.expired" para o e-mail de carrinho abandonado
+  gelato-webhook.js           Recebe atualizações de rastreio/estado da Gelato quando um pedido
+                              é expedido (opcional — ver a secção "Rastreio de envio" abaixo)
   prices.js                   Tabela de preços pública (o carrinho mostra subtotais — o preço
                               cobrado é sempre recalculado no servidor)
   order-status.js             Consulta o estado de uma encomenda (usado por pedido-confirmado.html)
@@ -105,7 +120,7 @@ api/                      Funções serverless (tem de ficar na raiz — é a pa
   admin/orders.js              Lista todas as encomendas, paginado (usado por admin.html)
   admin/testimonials.js        CRUD de depoimentos (protegido por ADMIN_PASSWORD)
 
-lib/{supabase,gelato,price,email,adminAuth,referral,formats}.js   Helpers dos serviços
+lib/{supabase,gelato,price,email,adminAuth,referral,formats,checkout}.js   Helpers dos serviços
                           externos, partilhados pelas funções em api/ (não são endpoints)
 
 supabase/schema.sql       Tabelas `orders`, `order_items` e `testimonials` (ver secção de
@@ -200,8 +215,20 @@ mais simples (tudo com plano gratuito para começar):
    automaticamente como funções serverless e serve o resto como site estático), copia
    `.env.example` para as variáveis de ambiente do projeto na Vercel com os valores reais.
 9. **Webhook da Stripe**: no dashboard da Stripe, cria um endpoint de webhook apontando para
-   `https://<o-teu-domínio>/api/stripe-webhook`, subscrito ao evento `checkout.session.completed`,
-   e copia o "Signing secret" para `STRIPE_WEBHOOK_SECRET`.
+   `https://<o-teu-domínio>/api/stripe-webhook`, subscrito aos eventos `checkout.session.completed`
+   **e** `checkout.session.expired` (este segundo é o que aciona o e-mail de carrinho
+   abandonado), e copia o "Signing secret" para `STRIPE_WEBHOOK_SECRET`.
+10. **Rastreio de envio** (opcional): no dashboard da Gelato (Settings → Webhooks), configura
+    o URL `https://<o-teu-domínio>/api/gelato-webhook?secret=<um-segredo-à-tua-escolha>` e
+    define esse mesmo segredo em `GELATO_WEBHOOK_SECRET` na Vercel. Confirma nos logs da função
+    `gelato-webhook` (Vercel → Deployments → Functions) se os campos do payload da primeira
+    entrega real batem certo com o que `api/gelato-webhook.js` espera — ajusta se for preciso.
+11. **Botão de WhatsApp**: troca o número de exemplo `351900000000` pelo teu número real (só
+    dígitos, formato internacional) em `assets/js/app.js` (`WHATSAPP_NUMBER`) e no `href` do
+    botão em `minhas-encomendas.html` e `pedido-confirmado.html`.
+12. **SEO**: se usares um domínio próprio em vez do `*.vercel.app`, atualiza esse domínio em
+    `robots.txt`, `sitemap.xml` e nas tags `canonical`/`og:url`/JSON-LD de `index.html`, e
+    submete o `sitemap.xml` no Google Search Console.
 
 ### Chip NFC: o processo (manual, de propósito)
 
@@ -252,8 +279,18 @@ adivinhar, o mesmo modelo de confiança já usado por `/api/order-image`.
   pelo service worker — pagamentos e consultas de encomendas são sempre em direto.
 - **Vercel Hobby (grátis) só permite 12 Serverless Functions por deployment** — cada ficheiro
   `.js` dentro de `api/` conta como uma (o código partilhado vive em `lib/`, fora de `api/`,
-  para não contar). Atualmente há 10; ao adicionar novos endpoints fica pouco espaço de
-  manobra antes de precisares do plano Pro ou de agrupar rotas no mesmo ficheiro.
+  para não contar). Atualmente há **11** — só sobra espaço para **mais 1** endpoint novo antes
+  de precisares do plano Pro ou de agrupar rotas no mesmo ficheiro.
+- **Rastreio de envio depende de campos não confirmados**: `api/gelato-webhook.js` assume
+  nomes de campo comuns (`trackingCode`, `trackingUrl`, ...) para o payload que a Gelato envia,
+  mas isto não está confirmado com uma entrega real — na primeira vez que a Gelato chamar este
+  endpoint, confirma nos logs da função na Vercel se os campos batem certo.
+- **Carrinho abandonado depende de subscreveres o evento certo na Stripe**: o dashboard da
+  Stripe tem de ter `checkout.session.expired` adicionado à lista de eventos do teu webhook
+  (ver passo 9 abaixo) — sem isso, o e-mail de lembrete nunca é enviado.
+- **Botão de WhatsApp com número placeholder**: `WHATSAPP_NUMBER` em `assets/js/app.js` (e o
+  `href` repetido em `minhas-encomendas.html`/`pedido-confirmado.html`) vêm com um número de
+  exemplo — troca pelo teu número real antes de publicar.
 - **Publicação automática no Instagram não está incluída** — a API oficial da Meta exige
   revisão de app e uma conta Instagram Business ligada; a partilha via `navigator.share` abre
   o menu nativo de partilha do dispositivo (o Instagram aparece lá como uma das opções, mas a

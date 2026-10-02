@@ -44,8 +44,19 @@ create table if not exists orders (
   item_count integer not null default 1,
 
   -- código de desconto Stripe (Promotion Code) gerado para este cliente depois do
-  -- pagamento, para ele partilhar com amigos (ver api/lib/referral.js).
+  -- pagamento, para ele partilhar com amigos (ver lib/referral.js).
   referral_code text,
+
+  -- rastreio do envio (preenchido pelo webhook da Gelato quando o pedido é expedido —
+  -- espelha o item principal; cada item tem o seu próprio rastreio em order_items).
+  tracking_code text,
+  tracking_url text,
+  carrier_name text,
+
+  -- true depois de já termos enviado o e-mail de "ainda tens itens no carrinho"
+  -- (checkout.session.expired) — evita reenviar em cada expiração seguinte da mesma
+  -- encomenda, mesmo que uma nova sessão de pagamento seja gerada automaticamente.
+  abandoned_email_sent boolean not null default false,
 
   error_message text
 );
@@ -73,6 +84,16 @@ create index if not exists orders_status_idx on orders (status);
 -- alter table order_items add constraint order_items_product_format_check
 --   check (product_format in ('card', 'flyer', 'convite', 'convite-digital', 'nfc'));
 
+-- Migração para quem já tinha a tabela orders antes do rastreio de envio e do
+-- carrinho abandonado existirem:
+-- alter table orders add column if not exists tracking_code text;
+-- alter table orders add column if not exists tracking_url text;
+-- alter table orders add column if not exists carrier_name text;
+-- alter table orders add column if not exists abandoned_email_sent boolean not null default false;
+-- alter table order_items add column if not exists tracking_code text;
+-- alter table order_items add column if not exists tracking_url text;
+-- alter table order_items add column if not exists carrier_name text;
+
 -- Itens individuais de um pedido (carrinho com vários designs/formatos numa só compra).
 -- A primeira linha de order_items de cada pedido espelha os campos "planos" que já
 -- existiam em orders (template_id, product_format, quantity, image_data) — por isso
@@ -95,6 +116,9 @@ create table if not exists order_items (
   amount_cents integer not null,
 
   gelato_order_id text,
+  tracking_code text,
+  tracking_url text,
+  carrier_name text,
   error_message text
 );
 
