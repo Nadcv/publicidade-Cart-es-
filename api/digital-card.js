@@ -51,6 +51,19 @@ module.exports = async function handler(req, res) {
       instagram: f.instagram || "",
       endereco: f.endereco || ""
     });
+
+    // Analytics do Cartão Digital, best-effort (nunca deve impedir a resposta acima —
+    // por isso vem depois do res.status().json() e tem o seu próprio try/catch).
+    // País/cidade vêm dos cabeçalhos de geo-IP da Vercel, só existem em produção.
+    try {
+      await supabase.from("card_scans").insert({
+        order_id: orderId,
+        country: req.headers["x-vercel-ip-country"] || null,
+        city: req.headers["x-vercel-ip-city"] ? decodeURIComponent(req.headers["x-vercel-ip-city"]) : null
+      });
+    } catch (scanErr) {
+      console.error("Falha ao registar leitura do cartão digital (order=" + orderId + "):", scanErr);
+    }
   } catch (err) {
     console.error("digital-card error:", err);
     res.status(500).json({ error: "Não foi possível carregar o cartão." });

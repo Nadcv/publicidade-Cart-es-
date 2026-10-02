@@ -124,6 +124,19 @@ create table if not exists order_items (
 
 create index if not exists order_items_order_id_idx on order_items (order_id);
 
+-- Registo de cada vez que o Cartão Digital de um pedido é aberto (tocar num chip NFC ou
+-- ler um QR code) — ver api/digital-card.js. país/cidade vêm dos cabeçalhos de geo-IP da
+-- Vercel (grátis, sem nenhum serviço externo), por isso só existem em produção.
+create table if not exists card_scans (
+  id uuid primary key default gen_random_uuid(),
+  order_id uuid not null references orders (id) on delete cascade,
+  scanned_at timestamptz not null default now(),
+  country text,
+  city text
+);
+
+create index if not exists card_scans_order_id_idx on card_scans (order_id);
+
 -- Depoimentos de clientes, adicionados manualmente pelo dono do site em admin.html
 -- (nunca gerados automaticamente — evita mostrar avaliações que não são reais).
 create table if not exists testimonials (

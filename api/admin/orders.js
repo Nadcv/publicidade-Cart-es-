@@ -13,6 +13,22 @@ module.exports = async function handler(req, res) {
 
   try {
     var supabase = getSupabaseAdmin();
+
+    // Modo alternativo: leituras do Cartão Digital de um pedido específico (analytics),
+    // reaproveitando este endpoint em vez de criar uma função nova (ver lib/formats.js —
+    // o plano gratuito da Vercel está perto do limite de 12 Serverless Functions).
+    if (req.query.scansFor) {
+      var scansResult = await supabase
+        .from("card_scans")
+        .select("scanned_at, country, city")
+        .eq("order_id", req.query.scansFor)
+        .order("scanned_at", { ascending: false })
+        .limit(200);
+      if (scansResult.error) throw scansResult.error;
+      res.status(200).json({ scans: scansResult.data || [], total: (scansResult.data || []).length });
+      return;
+    }
+
     var page = Math.max(1, parseInt(req.query.page, 10) || 1);
     var pageSize = 50;
     var from = (page - 1) * pageSize;

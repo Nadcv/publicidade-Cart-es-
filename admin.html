@@ -152,9 +152,9 @@
       var addr = o.shipping_address || {};
       var cityCountry = [addr.city, addr.country].filter(Boolean).join(" / ");
       var needsNfcLink = o.product_format === "nfc" || o.status === "manual_pending";
-      var actionCell = needsNfcLink
-        ? '<button type="button" class="btn btn-ghost btn-sm" data-copy-link="' + escapeHtml(o.id) + '">🔗 Copiar link</button>'
-        : "";
+      var actionCell =
+        (needsNfcLink ? '<button type="button" class="btn btn-ghost btn-sm" data-copy-link="' + escapeHtml(o.id) + '">🔗 Copiar link</button>' : "") +
+        '<button type="button" class="btn btn-ghost btn-sm" data-view-scans="' + escapeHtml(o.id) + '">📊 Leituras</button>';
       return (
         "<tr>" +
         "<td>" + date + "</td>" +
@@ -181,6 +181,37 @@
         } else {
           window.prompt("Copia este link:", url);
         }
+      });
+    });
+
+    tbody.querySelectorAll("[data-view-scans]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var orderId = btn.getAttribute("data-view-scans");
+        var originalText = btn.textContent;
+        btn.textContent = "A carregar...";
+        fetch("/api/admin/orders?scansFor=" + encodeURIComponent(orderId), { headers: { "X-Admin-Password": getPassword() } })
+          .then(function (r) { return r.json(); })
+          .then(function (data) {
+            btn.textContent = originalText;
+            var scans = data.scans || [];
+            if (!scans.length) {
+              window.alert("Ainda sem leituras do Cartão Digital para este pedido.");
+              return;
+            }
+            var lines = scans.slice(0, 20).map(function (s) {
+              var when = new Date(s.scanned_at).toLocaleString("pt-PT");
+              var place = [s.city, s.country].filter(Boolean).join(", ") || "localização desconhecida";
+              return when + " — " + place;
+            });
+            window.alert(
+              scans.length + " leitura(s) do Cartão Digital:\n\n" + lines.join("\n") +
+              (scans.length > 20 ? "\n… e mais " + (scans.length - 20) + "." : "")
+            );
+          })
+          .catch(function () {
+            btn.textContent = originalText;
+            window.alert("Não foi possível consultar as leituras agora.");
+          });
       });
     });
   }

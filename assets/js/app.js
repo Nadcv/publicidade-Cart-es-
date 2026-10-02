@@ -132,76 +132,76 @@
      pattern: none | diagonal | dots | grid | carbon | confetti
      --------------------------------------------------------- */
   var TEMPLATES = [
-    { id: "aviacao-1", name: "Skyline Azul", category: "aviacao", icon: "plane", layout: "diagonal", pattern: "diagonal",
+    { id: "aviacao-1", name: "Skyline Azul", category: "aviacao", style: "moderno", icon: "plane", layout: "diagonal", pattern: "diagonal",
       colors: { primary: "#173d7a", secondary: "#c9d4e3", bg: "#ffffff", bgBack: "#0e2a55", text: "#0e1c33", textSoft: "#5b6b83",
         textBack: "#eaf1fb", textSoftBack: "#9fb3d6", iconAccentBack: "#eaf1fb" } },
-    { id: "aviacao-2", name: "Voo Executivo", category: "aviacao", icon: "plane", layout: "topbar", pattern: "grid",
+    { id: "aviacao-2", name: "Voo Executivo", category: "aviacao", style: "classico", icon: "plane", layout: "topbar", pattern: "grid",
       colors: { primary: "#0e2a55", secondary: "#b48a3f", bg: "#ffffff", bgBack: "#ffffff", text: "#101826", textSoft: "#5b6b83" } },
 
-    { id: "casamento-1", name: "Elos Dourados", category: "casamento", icon: "rings", layout: "frame", pattern: "none",
+    { id: "casamento-1", name: "Elos Dourados", category: "casamento", style: "classico", icon: "rings", layout: "frame", pattern: "none",
       colors: { primary: "#b48a3f", secondary: "#3a2f24", bg: "#fbf6ec", bgBack: "#fbf6ec", text: "#2c2418", textSoft: "#8a7a5c" }, font: "Georgia, 'Times New Roman', serif" },
-    { id: "casamento-2", name: "Jardim Romance", category: "casamento", icon: "rings", layout: "centered", pattern: "dots",
+    { id: "casamento-2", name: "Jardim Romance", category: "casamento", style: "classico", icon: "rings", layout: "centered", pattern: "dots",
       colors: { primary: "#d9a5b3", secondary: "#b48a3f", bg: "#fff5f7", bgBack: "#fff5f7", text: "#3a2530", textSoft: "#8a6a72" }, font: "Georgia, 'Times New Roman', serif" },
 
-    { id: "gastronomia-1", name: "Sabor Rústico", category: "gastronomia", icon: "fork", layout: "topbar", pattern: "none",
+    { id: "gastronomia-1", name: "Sabor Rústico", category: "gastronomia", style: "classico", icon: "fork", layout: "topbar", pattern: "none",
       colors: { primary: "#a8481f", secondary: "#e7c98f", bg: "#fbf1e2", bgBack: "#fbf1e2", text: "#3a2211", textSoft: "#8a6a4c" } },
-    { id: "gastronomia-2", name: "Bistrô Noir", category: "gastronomia", icon: "fork", layout: "split", pattern: "diagonal",
+    { id: "gastronomia-2", name: "Bistrô Noir", category: "gastronomia", style: "moderno", icon: "fork", layout: "split", pattern: "diagonal",
       colors: { primary: "#1a1a1a", secondary: "#c99b3f", bg: "#151515", bgBack: "#151515", text: "#f2e9d8", textSoft: "#b8ab8f", iconAccent: "#c99b3f" } },
 
-    { id: "imoveis-1", name: "Moderno Verde", category: "imoveis", icon: "house", layout: "split", pattern: "grid",
+    { id: "imoveis-1", name: "Moderno Verde", category: "imoveis", style: "moderno", icon: "house", layout: "split", pattern: "grid",
       colors: { primary: "#1f5c3f", secondary: "#d8e6dc", bg: "#ffffff", bgBack: "#ffffff", text: "#101c15", textSoft: "#5c6b62" } },
-    { id: "imoveis-2", name: "Alto Padrão", category: "imoveis", icon: "house", layout: "frame", pattern: "none",
+    { id: "imoveis-2", name: "Alto Padrão", category: "imoveis", style: "classico", icon: "house", layout: "frame", pattern: "none",
       colors: { primary: "#2b2b2b", secondary: "#b48a3f", bg: "#ffffff", bgBack: "#ffffff", text: "#1a1a1a", textSoft: "#6b6b6b" } },
 
-    { id: "beleza-1", name: "Rosé Elegance", category: "beleza", icon: "flower", layout: "centered", pattern: "dots",
+    { id: "beleza-1", name: "Rosé Elegance", category: "beleza", style: "minimalista", icon: "flower", layout: "centered", pattern: "dots",
       colors: { primary: "#e0679d", secondary: "#f6c9dc", bg: "#fff0f6", bgBack: "#fff0f6", text: "#3a1f2b", textSoft: "#8a6272" } },
-    { id: "beleza-2", name: "Studio Glow", category: "beleza", icon: "flower", layout: "topbar", pattern: "none",
+    { id: "beleza-2", name: "Studio Glow", category: "beleza", style: "moderno", icon: "flower", layout: "topbar", pattern: "none",
       colors: { primary: "#c9436c", secondary: "#1a1a1a", bg: "#ffffff", bgBack: "#ffffff", text: "#1a1a1a", textSoft: "#6b6b6b" } },
 
-    { id: "tecnologia-1", name: "Tech Mono", category: "tecnologia", icon: "cpu", layout: "split", pattern: "grid",
+    { id: "tecnologia-1", name: "Tech Mono", category: "tecnologia", style: "minimalista", icon: "cpu", layout: "split", pattern: "grid",
       colors: { primary: "#0f1115", secondary: "#23c68b", bg: "#0f1115", bgBack: "#0f1115", text: "#eef5f2", textSoft: "#93a39c", iconAccent: "#23c68b" } },
-    { id: "tecnologia-2", name: "Startup Grid", category: "tecnologia", icon: "cpu", layout: "topbar", pattern: "grid",
+    { id: "tecnologia-2", name: "Startup Grid", category: "tecnologia", style: "moderno", icon: "cpu", layout: "topbar", pattern: "grid",
       colors: { primary: "#3a3fc9", secondary: "#23c6c6", bg: "#ffffff", bgBack: "#ffffff", text: "#12142b", textSoft: "#5b5e77" } },
 
-    { id: "eventos-1", name: "Festa Vibrante", category: "eventos", icon: "confetti", layout: "diagonal", pattern: "confetti",
+    { id: "eventos-1", name: "Festa Vibrante", category: "eventos", style: "moderno", icon: "confetti", layout: "diagonal", pattern: "confetti",
       colors: { primary: "#a15bde", secondary: "#ffb347", bg: "#ffffff", bgBack: "#2c1a45", text: "#20122f", textSoft: "#6b5b7d",
         textBack: "#f3ecff", textSoftBack: "#c9b8e0", iconAccentBack: "#ffb347" } },
-    { id: "eventos-2", name: "Balada Neon", category: "eventos", icon: "confetti", layout: "centered", pattern: "dots",
+    { id: "eventos-2", name: "Balada Neon", category: "eventos", style: "moderno", icon: "confetti", layout: "centered", pattern: "dots",
       colors: { primary: "#d63bb0", secondary: "#3b7bd6", bg: "#150e22", bgBack: "#150e22", text: "#f2ecff", textSoft: "#b8a9d6" } },
 
-    { id: "saude-1", name: "Clean Care", category: "saude", icon: "cross", layout: "topbar", pattern: "none",
+    { id: "saude-1", name: "Clean Care", category: "saude", style: "minimalista", icon: "cross", layout: "topbar", pattern: "none",
       colors: { primary: "#2196c9", secondary: "#a9def9", bg: "#ffffff", bgBack: "#ffffff", text: "#0f2733", textSoft: "#5b7280" } },
-    { id: "saude-2", name: "Vida Plena", category: "saude", icon: "cross", layout: "split", pattern: "dots",
+    { id: "saude-2", name: "Vida Plena", category: "saude", style: "minimalista", icon: "cross", layout: "split", pattern: "dots",
       colors: { primary: "#1c8f7a", secondary: "#d6f0ea", bg: "#ffffff", bgBack: "#ffffff", text: "#0f2b25", textSoft: "#5c766f" } },
 
-    { id: "automotivo-1", name: "Carbon Speed", category: "automotivo", icon: "bolt", layout: "split", pattern: "carbon",
+    { id: "automotivo-1", name: "Carbon Speed", category: "automotivo", style: "moderno", icon: "bolt", layout: "split", pattern: "carbon",
       colors: { primary: "#111111", secondary: "#d33a3a", bg: "#111111", bgBack: "#111111", text: "#f2f2f2", textSoft: "#a3a3a3", iconAccent: "#d33a3a" } },
-    { id: "automotivo-2", name: "Garage Pro", category: "automotivo", icon: "bolt", layout: "topbar", pattern: "diagonal",
+    { id: "automotivo-2", name: "Garage Pro", category: "automotivo", style: "moderno", icon: "bolt", layout: "topbar", pattern: "diagonal",
       colors: { primary: "#2b2b2b", secondary: "#f0b429", bg: "#ffffff", bgBack: "#ffffff", text: "#1a1a1a", textSoft: "#6b6b6b" } },
 
-    { id: "educacao-1", name: "Acadêmico Clássico", category: "educacao", icon: "cap", layout: "frame", pattern: "none",
+    { id: "educacao-1", name: "Acadêmico Clássico", category: "educacao", style: "classico", icon: "cap", layout: "frame", pattern: "none",
       colors: { primary: "#274b8f", secondary: "#b48a3f", bg: "#faf7ee", bgBack: "#faf7ee", text: "#161f33", textSoft: "#5b6478" }, font: "Georgia, 'Times New Roman', serif" },
-    { id: "educacao-2", name: "Campus Moderno", category: "educacao", icon: "cap", layout: "topbar", pattern: "grid",
+    { id: "educacao-2", name: "Campus Moderno", category: "educacao", style: "moderno", icon: "cap", layout: "topbar", pattern: "grid",
       colors: { primary: "#274b8f", secondary: "#4fb0e0", bg: "#ffffff", bgBack: "#ffffff", text: "#101a2e", textSoft: "#5b6478" } },
 
-    { id: "moda-1", name: "Editorial Preto", category: "moda", icon: "star", layout: "centered", pattern: "none",
+    { id: "moda-1", name: "Editorial Preto", category: "moda", style: "minimalista", icon: "star", layout: "centered", pattern: "none",
       colors: { primary: "#0a0a0a", secondary: "#ffffff", bg: "#0a0a0a", bgBack: "#0a0a0a", text: "#f5f5f5", textSoft: "#b0b0b0", iconAccent: "#ffffff" } },
-    { id: "moda-2", name: "Atelier Branco", category: "moda", icon: "star", layout: "frame", pattern: "dots",
+    { id: "moda-2", name: "Atelier Branco", category: "moda", style: "minimalista", icon: "star", layout: "frame", pattern: "dots",
       colors: { primary: "#0a0a0a", secondary: "#c9436c", bg: "#ffffff", bgBack: "#ffffff", text: "#0a0a0a", textSoft: "#6b6b6b" } },
 
-    { id: "corporativo-1", name: "Clássico Executivo", category: "corporativo", icon: "briefcase", layout: "topbar", pattern: "none",
+    { id: "corporativo-1", name: "Clássico Executivo", category: "corporativo", style: "classico", icon: "briefcase", layout: "topbar", pattern: "none",
       colors: { primary: "#1c2b45", secondary: "#a8b3c4", bg: "#ffffff", bgBack: "#ffffff", text: "#101826", textSoft: "#5b6b83" } },
-    { id: "corporativo-2", name: "Prestígio", category: "corporativo", icon: "briefcase", layout: "frame", pattern: "none",
+    { id: "corporativo-2", name: "Prestígio", category: "corporativo", style: "classico", icon: "briefcase", layout: "frame", pattern: "none",
       colors: { primary: "#2b2b2b", secondary: "#b48a3f", bg: "#ffffff", bgBack: "#ffffff", text: "#1a1a1a", textSoft: "#6b6b6b" } },
 
-    { id: "petcare-1", name: "Patinhas Alegres", category: "petcare", icon: "paw", layout: "centered", pattern: "dots",
+    { id: "petcare-1", name: "Patinhas Alegres", category: "petcare", style: "moderno", icon: "paw", layout: "centered", pattern: "dots",
       colors: { primary: "#e07b3f", secondary: "#2f8f5b", bg: "#fff6ee", bgBack: "#fff6ee", text: "#3a2416", textSoft: "#8a6a4c" } },
-    { id: "petcare-2", name: "Clínica Vet Clean", category: "petcare", icon: "paw", layout: "topbar", pattern: "none",
+    { id: "petcare-2", name: "Clínica Vet Clean", category: "petcare", style: "minimalista", icon: "paw", layout: "topbar", pattern: "none",
       colors: { primary: "#2f8f5b", secondary: "#d8e6dc", bg: "#ffffff", bgBack: "#ffffff", text: "#101c15", textSoft: "#5c6b62" } },
 
-    { id: "fitness-1", name: "Força Urbana", category: "fitness", icon: "dumbbell", layout: "split", pattern: "diagonal",
+    { id: "fitness-1", name: "Força Urbana", category: "fitness", style: "moderno", icon: "dumbbell", layout: "split", pattern: "diagonal",
       colors: { primary: "#111111", secondary: "#d9432e", bg: "#111111", bgBack: "#111111", text: "#f2f2f2", textSoft: "#a3a3a3", iconAccent: "#d9432e" } },
-    { id: "fitness-2", name: "Studio Energy", category: "fitness", icon: "dumbbell", layout: "diagonal", pattern: "grid",
+    { id: "fitness-2", name: "Studio Energy", category: "fitness", style: "moderno", icon: "dumbbell", layout: "diagonal", pattern: "grid",
       colors: { primary: "#d9432e", secondary: "#2b2b2b", bg: "#ffffff", bgBack: "#1a1010", text: "#1a1010", textSoft: "#6b6b6b",
         textBack: "#f5ece9", textSoftBack: "#c9a79f", iconAccentBack: "#d9432e" } }
   ];
@@ -329,6 +329,8 @@
   /* ---------------------------------------------------------
      Render: filtro + picker de templates
      --------------------------------------------------------- */
+  var STYLE_LABEL = { moderno: "Moderno", classico: "Clássico", minimalista: "Minimalista" };
+
   function renderTemplateFilter() {
     var sel = $("#template-category-filter");
     var opts = ['<option value="all">Todos os segmentos</option>'].concat(
@@ -337,13 +339,27 @@
     sel.innerHTML = opts.join("");
     sel.value = getTemplate(state.templateId).category;
     sel.addEventListener("change", function () { renderTemplatePicker(); });
+
+    var styleSel = $("#template-style-filter");
+    if (styleSel) {
+      var styleOpts = ['<option value="all">Todos os estilos</option>'].concat(
+        Object.keys(STYLE_LABEL).map(function (s) { return '<option value="' + s + '">' + STYLE_LABEL[s] + "</option>"; })
+      );
+      styleSel.innerHTML = styleOpts.join("");
+      styleSel.addEventListener("change", function () { renderTemplatePicker(); });
+    }
+
     $("#template-search").addEventListener("input", function () { renderTemplatePicker(); });
   }
 
   function renderTemplatePicker(filterCat) {
     filterCat = filterCat || $("#template-category-filter").value || "all";
+    var filterStyle = ($("#template-style-filter") && $("#template-style-filter").value) || "all";
     var search = $("#template-search").value.trim().toLowerCase();
     var list = templatesByCategory(filterCat);
+    if (filterStyle !== "all") {
+      list = list.filter(function (tpl) { return tpl.style === filterStyle; });
+    }
     if (search) {
       list = list.filter(function (tpl) {
         return tpl.name.toLowerCase().indexOf(search) !== -1 ||
@@ -358,7 +374,7 @@
       return '<button type="button" class="template-chip' + active + '" data-tpl="' + tpl.id + '">' +
         '<span class="swatch" style="background:linear-gradient(135deg,' + tpl.colors.primary + ',' + (tpl.colors.secondary || tpl.colors.primary) + ')"></span>' +
         '<span class="tpl-name">' + escapeHtml(tpl.name) + "</span>" +
-        '<span class="tpl-cat">' + escapeHtml(cat.name) + "</span>" +
+        '<span class="tpl-cat">' + escapeHtml(cat.name) + (tpl.style ? " · " + (STYLE_LABEL[tpl.style] || tpl.style) : "") + "</span>" +
         "</button>";
     }).join("");
 
@@ -518,23 +534,58 @@
     return lines.join("\n");
   }
 
-  function renderQrInto(el, text, size) {
+  // Evita gerar um QR com pouco contraste (cor de marca muito clara) — nesse caso cai
+  // para preto, que é sempre seguro para leitura.
+  function hexLuminance(hex) {
+    hex = String(hex || "").replace("#", "");
+    if (hex.length === 3) hex = hex.split("").map(function (c) { return c + c; }).join("");
+    if (hex.length !== 6) return 0;
+    var r = parseInt(hex.substr(0, 2), 16), g = parseInt(hex.substr(2, 2), 16), b = parseInt(hex.substr(4, 2), 16);
+    return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  }
+  function safeQrColor(hex) {
+    return hexLuminance(hex) > 0.6 ? "#000000" : (hex || "#000000");
+  }
+
+  // opts: { colorDark, logoSrc } — logoSrc desenha o logotipo ao centro do QR (só faz
+  // sentido em códigos grandes o suficiente; usamos correção de erro alta nesse caso
+  // para compensar a área tapada pelo logo).
+  function renderQrInto(el, text, size, opts) {
     if (!el) return;
     el.innerHTML = "";
     if (typeof window.QRCode !== "function" || !text) return;
+    opts = opts || {};
     try {
       new window.QRCode(el, {
         text: text, width: size, height: size,
-        colorDark: "#000000", colorLight: "#ffffff",
-        correctLevel: window.QRCode.CorrectLevel.M
+        colorDark: opts.colorDark || "#000000", colorLight: "#ffffff",
+        correctLevel: opts.logoSrc ? window.QRCode.CorrectLevel.H : window.QRCode.CorrectLevel.M
       });
+      if (opts.logoSrc) {
+        var canvas = el.querySelector("canvas");
+        if (canvas) {
+          var ctx = canvas.getContext("2d");
+          var img = new Image();
+          img.onload = function () {
+            var logoSize = size * 0.22;
+            var pad = logoSize * 0.14;
+            var x = (size - logoSize) / 2, y = (size - logoSize) / 2;
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(x - pad, y - pad, logoSize + pad * 2, logoSize + pad * 2);
+            ctx.drawImage(img, x, y, logoSize, logoSize);
+          };
+          img.src = opts.logoSrc;
+        }
+      }
     } catch (e) { /* falha a gerar o QR (biblioteca não carregou?) — ignora, o resto do cartão continua normal */ }
   }
 
   function openDigitalCard() {
     var f = state.fields;
     $("#digitalcard-name").textContent = f.nome || f.empresa || "Cartão Digital";
-    renderQrInto($("#digitalcard-qr"), buildVCard(f), 220);
+    var tpl = getTemplate(state.templateId);
+    var colors = effectiveColors(tpl);
+    renderQrInto($("#digitalcard-qr"), buildVCard(f), 220, { colorDark: safeQrColor(colors.primary), logoSrc: state.logo });
     $("#digitalcard-modal").classList.remove("hidden");
   }
   function closeDigitalCard() { $("#digitalcard-modal").classList.add("hidden"); }
@@ -622,7 +673,7 @@
         var isFront = el.classList.contains("front");
         el.classList.toggle("active", (isFront && state.side === "front") || (!isFront && state.side === "back"));
       });
-      if (state.includeQr) renderQrInto(board.querySelector(".cb-qr"), buildVCard(f), 92);
+      if (state.includeQr) renderQrInto(board.querySelector(".cb-qr"), buildVCard(f), 92, { colorDark: safeQrColor(colors.primary) });
     } else if (format.type === "nfc") {
       board.innerHTML = buildNfcPreview(f);
     } else {
@@ -644,6 +695,7 @@
     state.logo = null;
     $("#f-logo").value = "";
     $("#template-search").value = "";
+    if ($("#template-style-filter")) $("#template-style-filter").value = "all";
     $("#template-category-filter").value = catId;
     renderTemplatePicker(catId);
     state.fields = Object.assign({}, getCategory(catId).defaults);
@@ -700,6 +752,8 @@
     };
   }
 
+  var PROJECT_HISTORY_LIMIT = 5;
+
   function saveCurrentProject() {
     var suggestion = state.fields.empresa || state.fields.nome || "Meu Projeto";
     var name = window.prompt("Nome do projeto:", suggestion);
@@ -708,17 +762,24 @@
 
     var snap = currentProjectSnapshot(name);
     var idx = state.projects.findIndex(function (p) { return p.id === snap.id; });
-    if (idx >= 0) state.projects[idx] = snap; else state.projects.push(snap);
+    if (idx >= 0) {
+      // Guarda a versão anterior no histórico antes de substituir (sem arrastar o
+      // histórico dela própria, para o array não crescer sem limite).
+      var previous = Object.assign({}, state.projects[idx]);
+      delete previous.history;
+      snap.history = [previous].concat(state.projects[idx].history || []).slice(0, PROJECT_HISTORY_LIMIT);
+      state.projects[idx] = snap;
+    } else {
+      snap.history = [];
+      state.projects.push(snap);
+    }
     state.currentProjectId = snap.id;
     persistProjects();
     renderProjects();
     flashStatus("Projeto \"" + name + "\" salvo.");
   }
 
-  function loadProject(id) {
-    var p = state.projects.find(function (x) { return x.id === id; });
-    if (!p) return;
-    state.currentProjectId = p.id;
+  function applyProjectSnapshot(p) {
     state.templateId = p.templateId;
     state.formatId = p.formatId;
     state.fields = Object.assign({}, p.fields);
@@ -735,13 +796,29 @@
     if (qrCheckbox) qrCheckbox.checked = state.includeQr;
     renderBoard();
     showSection("editor");
+  }
+
+  function loadProject(id) {
+    var p = state.projects.find(function (x) { return x.id === id; });
+    if (!p) return;
+    state.currentProjectId = p.id;
+    applyProjectSnapshot(p);
     flashStatus("Projeto \"" + p.name + "\" carregado no editor.");
+  }
+
+  function restoreProjectVersion(id, historyIdx) {
+    var p = state.projects.find(function (x) { return x.id === id; });
+    if (!p || !p.history || !p.history[historyIdx]) return;
+    if (!window.confirm("Restaurar esta versão anterior? Podes editar e guardar de novo depois.")) return;
+    state.currentProjectId = p.id;
+    applyProjectSnapshot(p.history[historyIdx]);
+    flashStatus("Versão anterior de \"" + p.name + "\" carregada — guarda para confirmar.");
   }
 
   function duplicateProject(id) {
     var p = state.projects.find(function (x) { return x.id === id; });
     if (!p) return;
-    var copy = Object.assign({}, p, { id: uid(), name: p.name + " (cópia)", updatedAt: Date.now() });
+    var copy = Object.assign({}, p, { id: uid(), name: p.name + " (cópia)", updatedAt: Date.now(), history: [] });
     state.projects.push(copy);
     persistProjects();
     renderProjects();
@@ -772,6 +849,9 @@
         var card = document.createElement("div");
         card.className = "project-card";
         var date = new Date(p.updatedAt).toLocaleDateString("pt-BR");
+        var historyBtn = p.history && p.history.length
+          ? '<button type="button" class="btn btn-ghost btn-sm" data-act="hist">Histórico (' + p.history.length + ")</button>"
+          : "";
         card.innerHTML =
           '<div class="project-thumb"><div class="art-board" data-format="' + p.formatId + '"></div></div>' +
           '<div class="project-info"><strong>' + escapeHtml(p.name) + "</strong>" +
@@ -780,6 +860,7 @@
           '<button type="button" class="btn btn-secondary btn-sm" data-act="edit">Editar</button>' +
           '<button type="button" class="btn btn-ghost btn-sm" data-act="dup">Duplicar</button>' +
           '<button type="button" class="btn btn-ghost btn-sm" data-act="del">Excluir</button>' +
+          historyBtn +
           "</div>";
         grid.appendChild(card);
 
@@ -792,6 +873,25 @@
         card.querySelector('[data-act="edit"]').addEventListener("click", function () { loadProject(p.id); });
         card.querySelector('[data-act="dup"]').addEventListener("click", function () { duplicateProject(p.id); });
         card.querySelector('[data-act="del"]').addEventListener("click", function () { deleteProject(p.id); });
+
+        var histBtn = card.querySelector('[data-act="hist"]');
+        if (histBtn) {
+          histBtn.addEventListener("click", function () {
+            var existing = card.querySelector(".project-history");
+            if (existing) { existing.remove(); return; }
+            var panel = document.createElement("div");
+            panel.className = "project-history";
+            panel.innerHTML = p.history.map(function (h, i) {
+              var d = new Date(h.updatedAt).toLocaleString("pt-PT");
+              return '<div class="project-history-row"><span>' + d + '</span>' +
+                '<button type="button" class="btn btn-ghost btn-sm" data-restore="' + i + '">Restaurar</button></div>';
+            }).join("");
+            card.appendChild(panel);
+            panel.querySelectorAll("[data-restore]").forEach(function (btn) {
+              btn.addEventListener("click", function () { restoreProjectVersion(p.id, parseInt(btn.getAttribute("data-restore"), 10)); });
+            });
+          });
+        }
       });
   }
 

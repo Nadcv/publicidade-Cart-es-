@@ -31,8 +31,13 @@ Abra `http://localhost:8080`. Não precisa de `npm install`: é HTML/CSS/JS puro
   do segmento) e cores primária/secundária personalizáveis por cima da paleta do modelo.
 - **Cartão Digital (QR + vCard)**: o verso do cartão de visita pode incluir um QR code (opção
   ligada por omissão) que, ao ser lido, guarda o contacto diretamente no telemóvel de quem
-  recebe o cartão físico. Há também um botão "Ver Cartão Digital" com um QR maior e download
-  direto do ficheiro `.vcf`, disponível para qualquer formato.
+  recebe o cartão físico. Há também um botão "Ver Cartão Digital" com um QR maior — com a cor
+  primária do modelo (cai para preto se a cor for demasiado clara para se ler bem) e o
+  logotipo ao centro, se tiveres um carregado — e download direto do ficheiro `.vcf`,
+  disponível para qualquer formato.
+- **Analytics do Cartão Digital**: cada vez que alguém abre o Cartão Digital de um pedido
+  (tocar num chip NFC ou ler um QR code), fica registado o país/cidade aproximados — vê isto
+  no painel de administração, botão "📊 Leituras" em cada encomenda.
 - **Chip NFC**: um chip físico (cartão, autocolante ou porta-chaves) gravado com o link do
   Cartão Digital do cliente — quem encostar o telemóvel ao chip vê logo os contactos (nome,
   WhatsApp, redes sociais, morada) e pode guardá-los com um toque, sem abrir câmara nem apps.
@@ -43,7 +48,11 @@ Abra `http://localhost:8080`. Não precisa de `npm install`: é HTML/CSS/JS puro
   navegador, ou **partilhar** direto para outra app (Instagram, WhatsApp, etc.) via Web Share
   API do navegador — em navegadores/dispositivos sem suporte, cai automaticamente para download.
 - **Meus Projetos**: salvar, editar, duplicar e excluir projetos — persistidos no
-  `localStorage` do navegador (nada é enviado a um servidor).
+  `localStorage` do navegador (nada é enviado a um servidor). Cada vez que guardas por cima
+  de um projeto existente, a versão anterior fica no **histórico** (últimas 5), com um botão
+  para restaurar qualquer uma delas para o editor.
+- **Galeria de modelos com filtro por estilo**: além do filtro por segmento e da pesquisa por
+  nome, dá para filtrar os 28 modelos por estilo visual (Moderno, Clássico, Minimalista).
 - **Carrinho com vários itens**: dá para adicionar vários designs/formatos/quantidades ao
   carrinho (até 10 itens, físicos e/ou digitais) e pagar tudo numa única compra/envio. Se o
   carrinho for 100% digital (só "Convite Digital"), o checkout nem pede morada de envio.
@@ -123,8 +132,8 @@ api/                      Funções serverless (tem de ficar na raiz — é a pa
 lib/{supabase,gelato,price,email,adminAuth,referral,formats,checkout}.js   Helpers dos serviços
                           externos, partilhados pelas funções em api/ (não são endpoints)
 
-supabase/schema.sql       Tabelas `orders`, `order_items` e `testimonials` (ver secção de
-                          monetização abaixo)
+supabase/schema.sql       Tabelas `orders`, `order_items`, `card_scans` (analytics do Cartão
+                          Digital) e `testimonials` (ver secção de monetização abaixo)
 ```
 
 Cada modelo combina um `layout` (`split` | `topbar` | `diagonal` | `frame` | `centered`) com

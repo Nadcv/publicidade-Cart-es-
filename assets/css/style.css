@@ -381,8 +381,15 @@ button { font-family: inherit; }
 .project-info { padding: 14px 16px; display: flex; flex-direction: column; gap: 4px; }
 .project-info strong { font-size: .92rem; }
 .project-info span { font-size: .74rem; color: var(--text-soft); }
-.project-actions { display: flex; gap: 6px; padding: 0 16px 14px; }
-.project-actions button { flex: 1; }
+.project-actions { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 16px 14px; }
+.project-actions button { flex: 1 1 auto; min-width: 70px; }
+
+.project-history { padding: 0 16px 14px; display: flex; flex-direction: column; gap: 6px; }
+.project-history-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  font-size: .74rem; color: var(--text-soft); padding: 6px 10px; border: 1px solid var(--border);
+  border-radius: var(--radius-sm); background: var(--bg-2);
+}
 
 .testimonial-card {
   border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-1);
